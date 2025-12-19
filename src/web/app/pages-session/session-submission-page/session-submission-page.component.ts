@@ -941,6 +941,8 @@ export class SessionSubmissionPageComponent implements OnInit, AfterViewInit {
             modalRef.componentInstance.stopIndividualQnSaveSuccessPrompt.subscribe((checked: boolean) => {
                 this.isShowingInidividualQnSaveSuccessPrompt = !checked;
             });
+          } else {
+            this.statusMessageService.showSuccessToast(`Your response for question ${questionSubmissionForms[0].questionNumber} has been submitted successfully!`)
           }
 
           if (recipientId) {
