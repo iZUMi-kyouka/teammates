@@ -119,6 +119,7 @@ export class SessionSubmissionPageComponent implements OnInit, AfterViewInit {
 
   isQuestionCountOne: boolean = false;
   isSubmitAllClicked: boolean = false;
+  isShowingInidividualQnSaveSuccessPrompt: boolean = true;
 
   allSessionViews = SessionView;
   currentSelectedSessionView: SessionView = SessionView.DEFAULT;
@@ -925,17 +926,22 @@ export class SessionSubmissionPageComponent implements OnInit, AfterViewInit {
         finalize(() => {
           this.isSavingResponses = false;
 
-          const modalRef: NgbModalRef = this.ngbModal.open(SavingCompleteModalComponent);
-          modalRef.componentInstance.requestIds = requestIds;
-          modalRef.componentInstance.courseId = this.courseId;
-          modalRef.componentInstance.feedbackSessionName = this.feedbackSessionName;
-          modalRef.componentInstance.feedbackSessionTimezone = this.feedbackSessionTimezone;
-          modalRef.componentInstance.personEmail = this.personEmail;
-          modalRef.componentInstance.personName = this.personName;
-          modalRef.componentInstance.questions = questionSubmissionForms;
-          modalRef.componentInstance.answers = answers;
-          modalRef.componentInstance.notYetAnsweredQuestions = Array.from(notYetAnsweredQuestions.values());
-          modalRef.componentInstance.failToSaveQuestions = failToSaveQuestions;
+          if (this.isShowingInidividualQnSaveSuccessPrompt) {
+            const modalRef: NgbModalRef = this.ngbModal.open(SavingCompleteModalComponent);
+            modalRef.componentInstance.requestIds = requestIds;
+            modalRef.componentInstance.courseId = this.courseId;
+            modalRef.componentInstance.feedbackSessionName = this.feedbackSessionName;
+            modalRef.componentInstance.feedbackSessionTimezone = this.feedbackSessionTimezone;
+            modalRef.componentInstance.personEmail = this.personEmail;
+            modalRef.componentInstance.personName = this.personName;
+            modalRef.componentInstance.questions = questionSubmissionForms;
+            modalRef.componentInstance.answers = answers;
+            modalRef.componentInstance.notYetAnsweredQuestions = Array.from(notYetAnsweredQuestions.values());
+            modalRef.componentInstance.failToSaveQuestions = failToSaveQuestions;
+            modalRef.componentInstance.stopIndividualQnSaveSuccessPrompt.subscribe((checked: boolean) => {
+                this.isShowingInidividualQnSaveSuccessPrompt = !checked;
+            });
+          }
 
           if (recipientId) {
             this.questionSubmissionForms.forEach((model: QuestionSubmissionFormModel) => {
