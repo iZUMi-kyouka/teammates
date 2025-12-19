@@ -106,6 +106,24 @@ export class UserNotificationsListComponent implements OnInit {
     notificationTab.hasTabExpanded = !notificationTab.hasTabExpanded;
   }
 
+  markAllNotificationsAsRead(): void {
+    this.notificationService.markAllNotificationsAsRead({})
+      .subscribe({
+        next: (readNotifications: ReadNotifications) => {
+          this.readNotifications = new Set(readNotifications.readNotifications);
+          this.notificationTabs = this.notificationTabs.map((n) => ({
+            ...n,
+            isRead: true,
+            hasTabExpanded: false,
+          }));
+          this.statusMessageService.showSuccessToast('All notifications marked as read.');
+        },
+        error: (resp: ErrorMessageOutput) => {
+          this.statusMessageService.showErrorToast(resp.error.message);
+        }
+      });
+  }
+
   markNotificationAsRead(notificationTab: NotificationTab): void {
     const notification: Notification = notificationTab.notification;
     this.notificationService.markNotificationAsRead({

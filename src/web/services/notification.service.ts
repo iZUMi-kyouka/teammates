@@ -10,6 +10,7 @@ import {
   ReadNotifications,
 } from '../types/api-output';
 import {
+  MarkAllUnreadNotificationsAsReadRequest,
   MarkNotificationAsReadRequest,
   NotificationCreateRequest,
   NotificationUpdateRequest,
@@ -64,6 +65,13 @@ export class NotificationService {
    */
   markNotificationAsRead(request: MarkNotificationAsReadRequest): Observable<ReadNotifications> {
     return this.httpRequestService.post(ResourceEndpoints.NOTIFICATION_READ, {}, request);
+  }
+
+  /**
+   * Marks all notifications as read.
+   */
+  markAllNotificationsAsRead(request: MarkAllUnreadNotificationsAsReadRequest): Observable<ReadNotifications> {
+    return this.httpRequestService.post(ResourceEndpoints.NOTIFICATION_READ_ALL, {}, request);
   }
 
   /**
