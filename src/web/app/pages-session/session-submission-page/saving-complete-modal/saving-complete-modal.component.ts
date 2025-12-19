@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { saveAs } from 'file-saver';
 import { TimezoneService } from '../../../../services/timezone.service';
@@ -49,6 +49,9 @@ export class SavingCompleteModalComponent {
 
   @Input()
   failToSaveQuestions: Record<number, string> = {}; // Map of question number to error message
+
+  @Output()
+  stopIndividualQnSaveSuccessPrompt: EventEmitter<boolean> = new EventEmitter<boolean>();
 
   get hasFailToSaveQuestions(): boolean {
     return Object.keys(this.failToSaveQuestions).length !== 0;

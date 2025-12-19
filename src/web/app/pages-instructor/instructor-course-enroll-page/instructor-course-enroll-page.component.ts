@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, Inject, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HotTableRegisterer } from '@handsontable/angular';
 import Handsontable from 'handsontable';
@@ -104,6 +104,7 @@ export class InstructorCourseEnrollPageComponent implements OnInit {
               private progressBarService: ProgressBarService,
               private simpleModalService: SimpleModalService,
               private pageScrollService: PageScrollService,
+              private cdr: ChangeDetectorRef,
               @Inject(DOCUMENT) private document: Document) { }
 
   ngOnInit(): void {
@@ -632,6 +633,12 @@ export class InstructorCourseEnrollPageComponent implements OnInit {
       },
       complete: () => {
         this.isLoadingCourseEnrollPage = false;
+        this.cdr.detectChanges();
+
+        const newStudentsHOTInstance = this.hotRegisterer.getInstance(this.newStudentsHOT);
+        newStudentsHOTInstance.updateSettings({});
+        const existingStudentsHOTInstance = this.hotRegisterer.getInstance(this.existingStudentsHOT);
+        existingStudentsHOTInstance.updateSettings({});
       },
     });
     this.studentService.getStudentsFromCourse({ courseId: courseid }).subscribe({

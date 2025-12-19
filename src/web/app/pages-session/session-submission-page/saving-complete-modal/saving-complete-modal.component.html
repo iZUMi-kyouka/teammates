@@ -41,9 +41,18 @@
   <p *ngIf="!hasFailToSaveQuestions">
     <b>You are encouraged to download the proof of submission, which will also contain your latest responses.</b>
   </p>
-  <span class="text-danger" *ngIf="!hasFailToSaveQuestions && questions.length === 1">
+  <p class="text-danger" *ngIf="!hasFailToSaveQuestions && questions.length === 1">
       <i class="fas fa-exclamation"></i>
       Submitting question {{ questions[0].questionNumber }} does not submit other questions (if any).
+  </p>
+  <span>
+    <input
+        class="form-check-input me-2"
+        type="checkbox"
+        id="stopSaveSuccessPrompt"
+        name="stopSaveSuccessPrompt"
+        (change)="stopIndividualQnSaveSuccessPrompt.emit($event)" />
+    <label class="form-check-label" for="stopSaveSuccessPrompt">Do not show this prompt again (only for this submission session)</label>
   </span>
 </div>
 <div class="modal-footer">
