@@ -859,9 +859,9 @@ public class Logic {
      * <p>Preconditions:</p>
      * * All parameters are non-null.
      */
-    public List<UUID> updateAllReadNotifications(String id)
+    public List<UUID> updateAllReadNotifications(String id, NotificationTargetUser targetUser)
             throws InvalidParametersException, EntityDoesNotExistException {
-        return accountsLogic.updateAllReadNotifications(id);
+        return accountsLogic.updateAllReadNotifications(id, targetUser);
     }
 
     /**

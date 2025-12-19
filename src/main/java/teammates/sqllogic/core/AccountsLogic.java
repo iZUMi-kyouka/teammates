@@ -2,6 +2,7 @@ package teammates.sqllogic.core;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -201,23 +202,26 @@ public final class AccountsLogic {
      * @throws EntityDoesNotExistException if account or notification does not
      *                                     exist.
      */
-    public List<UUID> updateAllReadNotifications(String googleId)
+    public List<UUID> updateAllReadNotifications(String googleId, NotificationTargetUser targetUser)
             throws InvalidParametersException, EntityDoesNotExistException {
         Account account = accountsDb.getAccountByGoogleId(googleId);
         if (account == null) {
             throw new EntityDoesNotExistException("Trying to mark all unread notifications of a non-existent account.");
         }
 
-        HashSet<Notification> notifications = new HashSet<>(notificationsLogic.getActiveNotificationsByTargetUser(NotificationTargetUser.INSTRUCTOR));
-        Stream<Notification> readNotifications = account.getReadNotifications().stream().map(n -> n.getNotification());
-        readNotifications.forEach(n -> notifications.remove(n));
+        HashMap<UUID, Notification> notifications = new HashMap<>();
+        notificationsLogic.getActiveNotificationsByTargetUser(targetUser).stream()
+                .forEach(n -> notifications.put(n.getId(), n));
+
+                Stream<Notification> readNotifications = account.getReadNotifications().stream().map(n -> n.getNotification());
+        readNotifications.forEach(n -> notifications.remove(n.getId()));
 
         if (notifications.isEmpty()) {
             throw new EntityDoesNotExistException("Trying to mark all unread notifications as read when there are no unread notifications.");
         }
 
         Instant currentTime = Instant.now();
-        Stream<Notification> notificationsToMarkAsRead = notifications.stream()
+        Stream<Notification> notificationsToMarkAsRead = notifications.values().stream()
                 .filter(n -> !n.getEndTime().isBefore(currentTime));
         notificationsToMarkAsRead.forEach(n -> account.addReadNotification(new ReadNotification(account, n)));
 
