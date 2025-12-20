@@ -9,6 +9,7 @@
         <button id="sort-end-time" class="btn btn-light" [disabled]="isSelectedForSorting(SortBy.NOTIFICATION_END_TIME)" (click)="sortNotificationsBy(SortBy.NOTIFICATION_END_TIME)">End Time</button>
         <button id="sort-start-time" class="btn btn-light" [disabled]="isSelectedForSorting(SortBy.NOTIFICATION_START_TIME)" (click)="sortNotificationsBy(SortBy.NOTIFICATION_START_TIME)">Start Time</button>
       </div>
+      <button id="read-all-notifications" class="btn btn-light ms-2" [disabled]="isReadAllButtonDisabled()" (click)="markAllNotificationsAsRead()">Mark All as Read</button>
     </div>
   </div>
 </div>

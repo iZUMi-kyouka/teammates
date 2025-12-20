@@ -854,6 +854,17 @@ public class Logic {
     }
 
     /**
+     * Updates read status for all of a user's notifications.
+     *
+     * <p>Preconditions:</p>
+     * * All parameters are non-null.
+     */
+    public List<UUID> updateAllReadNotifications(String id, NotificationTargetUser targetUser)
+            throws InvalidParametersException, EntityDoesNotExistException {
+        return accountsLogic.updateAllReadNotifications(id, targetUser);
+    }
+
+    /**
      * Gets instructor associated with {@code id}.
      *
      * @param id    Id of Instructor.

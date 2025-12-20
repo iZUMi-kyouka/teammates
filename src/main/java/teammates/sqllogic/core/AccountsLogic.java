@@ -1,10 +1,15 @@
 package teammates.sqllogic.core;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import teammates.common.datatransfer.NotificationTargetUser;
 import teammates.common.exception.EntityAlreadyExistsException;
 import teammates.common.exception.EntityDoesNotExistException;
 import teammates.common.exception.InvalidParametersException;
@@ -187,6 +192,44 @@ public final class AccountsLogic {
                 .map(n -> n.getNotification().getId())
                 .collect(Collectors.toList());
     }
+
+    /**
+     * Updates all the readNotifications of an account.
+     *
+     * @param googleId       google ID of the user who read the notification.
+     * @return the account with updated read notifications.
+     * @throws InvalidParametersException  if the notification has expired.
+     * @throws EntityDoesNotExistException if account or notification does not
+     *                                     exist.
+     */
+    public List<UUID> updateAllReadNotifications(String googleId, NotificationTargetUser targetUser)
+            throws InvalidParametersException, EntityDoesNotExistException {
+        Account account = accountsDb.getAccountByGoogleId(googleId);
+        if (account == null) {
+            throw new EntityDoesNotExistException("Trying to mark all unread notifications of a non-existent account.");
+        }
+
+        HashMap<UUID, Notification> notifications = new HashMap<>();
+        notificationsLogic.getActiveNotificationsByTargetUser(targetUser).stream()
+                .forEach(n -> notifications.put(n.getId(), n));
+
+                Stream<Notification> readNotifications = account.getReadNotifications().stream().map(n -> n.getNotification());
+        readNotifications.forEach(n -> notifications.remove(n.getId()));
+
+        if (notifications.isEmpty()) {
+            throw new EntityDoesNotExistException("Trying to mark all unread notifications as read when there are no unread notifications.");
+        }
+
+        Instant currentTime = Instant.now();
+        Stream<Notification> notificationsToMarkAsRead = notifications.values().stream()
+                .filter(n -> !n.getEndTime().isBefore(currentTime));
+        notificationsToMarkAsRead.forEach(n -> account.addReadNotification(new ReadNotification(account, n)));
+
+        return account.getReadNotifications().stream()
+                .map(n -> n.getNotification().getId())
+                .collect(Collectors.toList());
+    }
+
 
     /**
      * Gets ids of read notifications in an account.

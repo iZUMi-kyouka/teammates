@@ -61,6 +61,11 @@ export class UserNotificationsListComponent implements OnInit {
     this.loadNotifications();
   }
 
+  isReadAllButtonDisabled(): boolean {
+    return this.notificationTabs
+      .every((n) => this.readNotifications.has(n.notification.notificationId));
+  }
+
   loadNotifications(): void {
     this.hasLoadingFailed = false;
     this.isLoadingNotifications = true;
@@ -69,31 +74,30 @@ export class UserNotificationsListComponent implements OnInit {
       .subscribe({
         next: (readNotifications: ReadNotifications) => {
           this.readNotifications = new Set(readNotifications.readNotifications);
-        },
-        error: (resp: ErrorMessageOutput) => {
-          this.hasLoadingFailed = true;
-          this.statusMessageService.showErrorToast(resp.error.message);
-        },
-      });
-
-    this.notificationService.getAllNotificationsForTargetUser(this.userType)
-      .pipe(finalize(() => { this.isLoadingNotifications = false; }))
-      .subscribe({
-        next: (notifications: Notifications) => {
-          notifications.notifications.forEach((notification: Notification) => {
-            this.notificationTabs.push({
-              notification,
-              hasTabExpanded: !this.readNotifications.has(notification.notificationId),
-              isRead: this.readNotifications.has(notification.notificationId),
-              startDate: this.timezoneService.formatToString(
-                  notification.startTimestamp, this.timezone, this.DATE_FORMAT,
-              ),
-              endDate: this.timezoneService.formatToString(
-                  notification.endTimestamp, this.timezone, this.DATE_FORMAT,
-              ),
+          this.notificationService.getAllNotificationsForTargetUser(this.userType)
+            .pipe(finalize(() => { this.isLoadingNotifications = false; }))
+            .subscribe({
+              next: (notifications: Notifications) => {
+                notifications.notifications.forEach((notification: Notification) => {
+                  this.notificationTabs.push({
+                    notification,
+                    hasTabExpanded: !this.readNotifications.has(notification.notificationId),
+                    isRead: this.readNotifications.has(notification.notificationId),
+                    startDate: this.timezoneService.formatToString(
+                        notification.startTimestamp, this.timezone, this.DATE_FORMAT,
+                    ),
+                    endDate: this.timezoneService.formatToString(
+                        notification.endTimestamp, this.timezone, this.DATE_FORMAT,
+                    ),
+                  });
+                });
+                this.sortNotificationsBy(this.notificationsSortBy);
+              },
+              error: (resp: ErrorMessageOutput) => {
+                this.hasLoadingFailed = true;
+                this.statusMessageService.showErrorToast(resp.error.message);
+              },
             });
-          });
-          this.sortNotificationsBy(this.notificationsSortBy);
         },
         error: (resp: ErrorMessageOutput) => {
           this.hasLoadingFailed = true;
@@ -104,6 +108,24 @@ export class UserNotificationsListComponent implements OnInit {
 
   toggleCard(notificationTab: NotificationTab): void {
     notificationTab.hasTabExpanded = !notificationTab.hasTabExpanded;
+  }
+
+  markAllNotificationsAsRead(): void {
+    this.notificationService.markAllNotificationsAsRead({ targetUser: this.userType })
+      .subscribe({
+        next: (readNotifications: ReadNotifications) => {
+          this.readNotifications = new Set(readNotifications.readNotifications);
+          this.notificationTabs = this.notificationTabs.map((n) => ({
+            ...n,
+            isRead: true,
+            hasTabExpanded: false,
+          }));
+          this.statusMessageService.showSuccessToast('All notifications marked as read.');
+        },
+        error: (resp: ErrorMessageOutput) => {
+          this.statusMessageService.showErrorToast(resp.error.message);
+        }
+      });
   }
 
   markNotificationAsRead(notificationTab: NotificationTab): void {
