@@ -61,6 +61,11 @@ export class UserNotificationsListComponent implements OnInit {
     this.loadNotifications();
   }
 
+  isReadAllButtonDisabled(): boolean {
+    return this.notificationTabs
+      .every((n) => this.readNotifications.has(n.notification.notificationId));
+  }
+
   loadNotifications(): void {
     this.hasLoadingFailed = false;
     this.isLoadingNotifications = true;
@@ -106,7 +111,7 @@ export class UserNotificationsListComponent implements OnInit {
   }
 
   markAllNotificationsAsRead(): void {
-    this.notificationService.markAllNotificationsAsRead({})
+    this.notificationService.markAllNotificationsAsRead({ targetUser: this.userType })
       .subscribe({
         next: (readNotifications: ReadNotifications) => {
           this.readNotifications = new Set(readNotifications.readNotifications);
