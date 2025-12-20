@@ -24,11 +24,8 @@ public class MarkAllUnreadNotificationsAsReadAction extends Action {
 
     @Override
     public ActionResult execute() throws InvalidHttpRequestBodyException, InvalidOperationException {
-        getAndValidateRequestBody(MarkAllUnreadNotificationsAsReadRequest.class);
-        NotificationTargetUser targetUser =
-                userInfo.isInstructor
-                ? NotificationTargetUser.INSTRUCTOR
-                : NotificationTargetUser.STUDENT;
+        MarkAllUnreadNotificationsAsReadRequest request = getAndValidateRequestBody(MarkAllUnreadNotificationsAsReadRequest.class);
+        NotificationTargetUser targetUser = request.getTargetUser();
 
         try {
             List<UUID> readNotifications =
