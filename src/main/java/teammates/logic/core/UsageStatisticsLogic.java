@@ -20,7 +20,6 @@ public final class UsageStatisticsLogic {
 
     private final UsageStatisticsDb usageStatisticsDb = UsageStatisticsDb.inst();
 
-    private AccountRequestsLogic accountRequestsLogic;
     private CoursesLogic coursesLogic;
     private FeedbackResponsesLogic feedbackResponsesLogic;
     private InstructorsLogic instructorsLogic;
@@ -35,7 +34,6 @@ public final class UsageStatisticsLogic {
     }
 
     void initLogicDependencies() {
-        accountRequestsLogic = AccountRequestsLogic.inst();
         coursesLogic = CoursesLogic.inst();
         feedbackResponsesLogic = FeedbackResponsesLogic.inst();
         instructorsLogic = InstructorsLogic.inst();
@@ -57,14 +55,12 @@ public final class UsageStatisticsLogic {
         int numCourses = coursesLogic.getNumCoursesByTimeRange(startTime, endTime);
         int numStudents = studentsLogic.getNumStudentsByTimeRange(startTime, endTime);
         int numInstructors = instructorsLogic.getNumInstructorsByTimeRange(startTime, endTime);
-        int numAccountRequests = accountRequestsLogic.getNumAccountRequestsByTimeRange(startTime, endTime);
 
         return UsageStatisticsAttributes.builder(startTime, 1) // both startTime and timePeriod do not matter here
                 .withNumResponses(numResponses)
                 .withNumCourses(numCourses)
                 .withNumStudents(numStudents)
                 .withNumInstructors(numInstructors)
-                .withNumAccountRequests(numAccountRequests)
                 .build();
     }
 
