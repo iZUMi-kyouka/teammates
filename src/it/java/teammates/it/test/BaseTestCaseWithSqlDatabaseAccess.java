@@ -86,8 +86,6 @@ public class BaseTestCaseWithSqlDatabaseAccess extends BaseTestCase {
 
         // TODO: remove after migration, needed for dual db support
 
-        teammates.storage.search.SearchManagerFactory.registerAccountRequestSearchManager(
-            new teammates.storage.search.AccountRequestSearchManager(TestProperties.SEARCH_SERVICE_HOST, true));
         teammates.storage.search.SearchManagerFactory.registerInstructorSearchManager(
             new teammates.storage.search.InstructorSearchManager(TestProperties.SEARCH_SERVICE_HOST, true));
         teammates.storage.search.SearchManagerFactory.registerStudentSearchManager(
