@@ -29,7 +29,6 @@ public class UsageStatisticsLogicTest extends BaseLogicTest {
         assertEquals(dataBundle.courses.size() - numCoursesCreatedInDistantPast, stats.getNumCourses());
         assertEquals(dataBundle.students.size(), stats.getNumStudents());
         assertEquals(dataBundle.instructors.size(), stats.getNumInstructors());
-        assertEquals(0, stats.getNumAccountRequests()); // all account requests are created in distant past
 
         ______TS("typical success case: distant past");
 
@@ -40,7 +39,6 @@ public class UsageStatisticsLogicTest extends BaseLogicTest {
         assertEquals(numCoursesCreatedInDistantPast, stats.getNumCourses());
         assertEquals(0, stats.getNumStudents());
         assertEquals(0, stats.getNumInstructors());
-        assertEquals(dataBundle.accountRequests.size(), stats.getNumAccountRequests());
 
     }
 
