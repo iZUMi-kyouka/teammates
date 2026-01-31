@@ -3,7 +3,6 @@ package teammates.test;
 import teammates.common.datatransfer.DataBundle;
 import teammates.common.datatransfer.SqlDataBundle;
 import teammates.common.datatransfer.attributes.AccountAttributes;
-import teammates.common.datatransfer.attributes.AccountRequestAttributes;
 import teammates.common.datatransfer.attributes.CourseAttributes;
 import teammates.common.datatransfer.attributes.DeadlineExtensionAttributes;
 import teammates.common.datatransfer.attributes.EntityAttributes;
@@ -73,9 +72,6 @@ public abstract class BaseTestCaseWithDatabaseAccess extends BaseTestCase {
 
         } else if (expected instanceof StudentAttributes) {
             return getStudent((StudentAttributes) expected);
-
-        } else if (expected instanceof AccountRequestAttributes) {
-            return getAccountRequest((AccountRequestAttributes) expected);
 
         } else if (expected instanceof DeadlineExtensionAttributes) {
             return getDeadlineExtension((DeadlineExtensionAttributes) expected);
@@ -149,11 +145,6 @@ public abstract class BaseTestCaseWithDatabaseAccess extends BaseTestCase {
             StudentAttributes actualStudent = (StudentAttributes) actual;
             equalizeIrrelevantData(expectedStudent, actualStudent);
             assertEquals(JsonUtils.toJson(expectedStudent), JsonUtils.toJson(actualStudent));
-
-        } else if (expected instanceof AccountRequestAttributes) {
-            AccountRequestAttributes expectedAccountRequest = (AccountRequestAttributes) expected;
-            AccountRequestAttributes actualAccountRequest = (AccountRequestAttributes) actual;
-            assertEquals(JsonUtils.toJson(expectedAccountRequest), JsonUtils.toJson(actualAccountRequest));
 
         } else if (expected instanceof DeadlineExtensionAttributes) {
             DeadlineExtensionAttributes expectedDeadlineExtension = (DeadlineExtensionAttributes) expected;
@@ -248,8 +239,6 @@ public abstract class BaseTestCaseWithDatabaseAccess extends BaseTestCase {
     protected abstract InstructorAttributes getInstructor(InstructorAttributes instructor);
 
     protected abstract StudentAttributes getStudent(StudentAttributes student);
-
-    protected abstract AccountRequestAttributes getAccountRequest(AccountRequestAttributes accountRequest);
 
     protected abstract DeadlineExtensionAttributes getDeadlineExtension(DeadlineExtensionAttributes accountRequest);
 
