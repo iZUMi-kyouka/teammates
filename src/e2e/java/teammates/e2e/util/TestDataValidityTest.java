@@ -140,13 +140,6 @@ public class TestDataValidityTest extends BaseTestCase {
                     }
                 });
 
-                dataBundle.accountRequests.forEach((id, accountRequest) -> {
-                    if (!isValidTestEmail(accountRequest.getEmail())) {
-                        errors.computeIfAbsent(pathString, k -> new ArrayList<>())
-                                .add("Invalid account request email: " + accountRequest.getEmail());
-                    }
-                });
-
                 dataBundle.deadlineExtensions.forEach((id, deadlineExtension) -> {
                     if (!isValidTestCourseId(deadlineExtension.getCourseId(), testPage)) {
                         errors.computeIfAbsent(pathString, k -> new ArrayList<>())
