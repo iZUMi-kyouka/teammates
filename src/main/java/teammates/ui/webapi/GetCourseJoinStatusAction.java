@@ -1,6 +1,5 @@
 package teammates.ui.webapi;
 
-import teammates.common.datatransfer.attributes.AccountRequestAttributes;
 import teammates.common.datatransfer.attributes.InstructorAttributes;
 import teammates.common.datatransfer.attributes.StudentAttributes;
 import teammates.common.util.Const;
@@ -57,19 +56,13 @@ public class GetCourseJoinStatusAction extends Action {
 
     private JsonResult getInstructorJoinStatus(String regkey, boolean isCreatingAccount) {
         if (isCreatingAccount) {
-            AccountRequestAttributes accountRequest = logic.getAccountRequestForRegistrationKey(regkey);
             AccountRequest sqlAccountRequest = sqlLogic.getAccountRequestByRegistrationKey(regkey);
 
-            if (accountRequest == null && sqlAccountRequest == null) {
+            if (sqlAccountRequest == null) {
                 throw new EntityNotFoundException("No account request with given registration key: " + regkey);
             }
 
-            if (sqlAccountRequest != null) {
-                return getJoinStatusResult(sqlAccountRequest.getRegisteredAt() != null);
-            }
-            if (accountRequest != null) {
-                return getJoinStatusResult(accountRequest.getRegisteredAt() != null);
-            }
+            return getJoinStatusResult(sqlAccountRequest.getRegisteredAt() != null);
         }
 
         InstructorAttributes instructorAttributes = logic.getInstructorForRegistrationKey(regkey);
