@@ -13,7 +13,6 @@ import teammates.common.datatransfer.SqlDataBundle;
 import teammates.common.exception.InvalidParametersException;
 import teammates.common.util.JsonUtils;
 import teammates.storage.sqlentity.Account;
-import teammates.storage.sqlentity.AccountRequest;
 import teammates.storage.sqlentity.Course;
 import teammates.storage.sqlentity.DeadlineExtension;
 import teammates.storage.sqlentity.FeedbackQuestion;
@@ -121,11 +120,6 @@ public class ConvertDatastoreJsonToSqlJson {
         dataStoreBundle.courses.forEach((k, datastoreCourse) -> {
             Course sqlCourse = entityConverter.convert(datastoreCourse);
             sqlDataBundle.courses.put(k, sqlCourse);
-        });
-
-        dataStoreBundle.accountRequests.forEach((k, accountRequest) -> {
-            AccountRequest sqlAccountRequest = entityConverter.convert(accountRequest);
-            sqlDataBundle.accountRequests.put(k, sqlAccountRequest);
         });
 
         dataStoreBundle.notifications.forEach((k, notification) -> {
