@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.UUID;
 
 import org.testng.ITestContext;
 import org.testng.annotations.AfterClass;
@@ -13,7 +12,6 @@ import org.testng.annotations.BeforeClass;
 import teammates.common.datatransfer.DataBundle;
 import teammates.common.datatransfer.SqlDataBundle;
 import teammates.common.datatransfer.attributes.AccountAttributes;
-import teammates.common.datatransfer.attributes.AccountRequestAttributes;
 import teammates.common.datatransfer.attributes.CourseAttributes;
 import teammates.common.datatransfer.attributes.DeadlineExtensionAttributes;
 import teammates.common.datatransfer.attributes.FeedbackQuestionAttributes;
@@ -326,11 +324,6 @@ public abstract class BaseE2ETestCase extends BaseTestCaseWithDatabaseAccess {
      */
     protected String getKeyForStudent(StudentAttributes student) {
         return getStudent(student).getKey();
-    }
-
-    @Override
-    protected AccountRequestAttributes getAccountRequest(AccountRequestAttributes accountRequest) {
-        return BACKDOOR.getAccountRequest(UUID.fromString(accountRequest.getId()));
     }
 
     NotificationAttributes getNotification(String notificationId) {
