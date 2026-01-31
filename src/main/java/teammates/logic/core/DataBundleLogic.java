@@ -11,7 +11,6 @@ import teammates.common.datatransfer.AttributesDeletionQuery;
 import teammates.common.datatransfer.DataBundle;
 import teammates.common.datatransfer.InstructorPrivileges;
 import teammates.common.datatransfer.attributes.AccountAttributes;
-import teammates.common.datatransfer.attributes.AccountRequestAttributes;
 import teammates.common.datatransfer.attributes.CourseAttributes;
 import teammates.common.datatransfer.attributes.DeadlineExtensionAttributes;
 import teammates.common.datatransfer.attributes.EntityAttributes;
@@ -26,7 +25,6 @@ import teammates.common.exception.InvalidParametersException;
 import teammates.common.exception.SearchServiceException;
 import teammates.common.util.Const;
 import teammates.common.util.StringHelper;
-import teammates.storage.api.AccountRequestsDb;
 import teammates.storage.api.AccountsDb;
 import teammates.storage.api.CoursesDb;
 import teammates.storage.api.DeadlineExtensionsDb;
@@ -48,7 +46,6 @@ public final class DataBundleLogic {
     private static final DataBundleLogic instance = new DataBundleLogic();
 
     private final AccountsDb accountsDb = AccountsDb.inst();
-    private final AccountRequestsDb accountRequestsDb = AccountRequestsDb.inst();
     private final CoursesDb coursesDb = CoursesDb.inst();
     private final DeadlineExtensionsDb deadlineExtensionsDb = DeadlineExtensionsDb.inst();
     private final StudentsDb studentsDb = StudentsDb.inst();
@@ -85,7 +82,6 @@ public final class DataBundleLogic {
         }
 
         Collection<AccountAttributes> accounts = dataBundle.accounts.values();
-        Collection<AccountRequestAttributes> accountRequests = dataBundle.accountRequests.values();
         Collection<CourseAttributes> courses = dataBundle.courses.values();
         Collection<InstructorAttributes> instructors = dataBundle.instructors.values();
         Collection<StudentAttributes> students = dataBundle.students.values();
@@ -107,7 +103,6 @@ public final class DataBundleLogic {
         processQuestions(questions);
 
         List<AccountAttributes> newAccounts = accountsDb.putEntities(googleIdAccountMap.values());
-        List<AccountRequestAttributes> newAccountRequests = accountRequestsDb.putEntities(accountRequests);
 
         List<CourseAttributes> newCourses = coursesDb.putEntities(courses);
         List<InstructorAttributes> newInstructors = instructorsDb.putEntities(instructors);
@@ -123,7 +118,6 @@ public final class DataBundleLogic {
         List<NotificationAttributes> newNotifications = nfDb.putEntities(notifications);
 
         updateDataBundleValue(newAccounts, dataBundle.accounts);
-        updateDataBundleValue(newAccountRequests, dataBundle.accountRequests);
         updateDataBundleValue(newCourses, dataBundle.courses);
         updateDataBundleValue(newDeadlineExtensions, dataBundle.deadlineExtensions);
         updateDataBundleValue(newInstructors, dataBundle.instructors);
@@ -177,13 +171,6 @@ public final class DataBundleLogic {
             InstructorAttributes instructorInDb =
                     instructorsDb.getInstructorForEmail(instructor.getCourseId(), instructor.getEmail());
             instructorsDb.putDocument(instructorInDb);
-        }
-
-        Map<String, AccountRequestAttributes> accountRequests = dataBundle.accountRequests;
-        for (AccountRequestAttributes accountRequest : accountRequests.values()) {
-            AccountRequestAttributes accountRequestInDb =
-                    accountRequestsDb.getAccountRequest(accountRequest.getEmail(), accountRequest.getInstitute());
-            accountRequestsDb.putDocument(accountRequestInDb);
         }
     }
 
@@ -375,9 +362,6 @@ public final class DataBundleLogic {
 
         dataBundle.accounts.values().forEach(account -> {
             accountsDb.deleteAccount(account.getGoogleId());
-        });
-        dataBundle.accountRequests.values().forEach(accountRequest -> {
-            accountRequestsDb.deleteAccountRequest(accountRequest.getEmail(), accountRequest.getInstitute());
         });
         dataBundle.notifications.values().forEach(notification -> {
             nfDb.deleteNotification(notification.getNotificationId());
