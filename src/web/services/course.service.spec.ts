@@ -132,17 +132,6 @@ describe('CourseService', () => {
     expect(spyHttpRequestService.delete).toHaveBeenCalledWith(ResourceEndpoints.COURSE, paramMap);
   });
 
-  it('should execute PUT to archive course', () => {
-    const courseid: string = 'test-id';
-    const request: CourseArchiveRequest = {
-      archiveStatus: true,
-    };
-    const paramMap: { [key: string]: string } = { courseid };
-    service.changeArchiveStatus(courseid, request);
-    expect(spyHttpRequestService.put)
-        .toHaveBeenCalledWith(ResourceEndpoints.COURSE_ARCHIVE, paramMap, request);
-  });
-
   it('should execute PUT to bin course', () => {
     const courseid: string = 'test-id';
     const paramMap: { [key: string]: string } = { courseid };

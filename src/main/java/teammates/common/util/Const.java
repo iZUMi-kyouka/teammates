@@ -348,7 +348,6 @@ public final class Const {
         public static final String ACCOUNTS = URI_PREFIX + "/accounts";
         public static final String RESPONSE_COMMENT = URI_PREFIX + "/responsecomment";
         public static final String COURSE = URI_PREFIX + "/course";
-        public static final String COURSE_ARCHIVE = URI_PREFIX + "/course/archive";
         public static final String BIN_COURSE = URI_PREFIX + "/bin/course";
         public static final String COURSE_SECTIONS = URI_PREFIX + "/course/sections";
         public static final String COURSES = URI_PREFIX + "/courses";

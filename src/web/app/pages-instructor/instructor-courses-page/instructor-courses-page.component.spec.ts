@@ -353,42 +353,6 @@ describe('InstructorCoursesPageComponent', () => {
     expect(component.courseStats['CS1231']['unregistered']).toEqual(1);
   });
 
-  it('should archive an active course', () => {
-    const courseArchiveCS1231: CourseArchive = {
-      courseId: 'CS1231',
-      isArchived: true,
-    };
-    component.activeCourses = [courseModelCS1231];
-    const courseSpy: SpyInstance = jest.spyOn(courseService, 'changeArchiveStatus')
-        .mockReturnValue(of(courseArchiveCS1231));
-    component.changeArchiveStatus('CS1231', true);
-
-    expect(courseSpy).toHaveBeenCalledTimes(1);
-    expect(courseSpy).toHaveBeenLastCalledWith('CS1231', { archiveStatus: true });
-
-    expect(component.activeCourses.length).toEqual(0);
-    expect(component.archivedCourses.length).toEqual(1);
-    expect(component.archivedCourses[0].course.courseId).toEqual('CS1231');
-  });
-
-  it('should unarchive an archived course', () => {
-    const courseArchiveCS1231: CourseArchive = {
-      courseId: 'CS1231',
-      isArchived: false,
-    };
-    component.archivedCourses = [courseModelCS1231];
-    const courseSpy: SpyInstance = jest.spyOn(courseService, 'changeArchiveStatus')
-        .mockReturnValue(of(courseArchiveCS1231));
-    component.changeArchiveStatus('CS1231', false);
-
-    expect(courseSpy).toHaveBeenCalledTimes(1);
-    expect(courseSpy).toHaveBeenNthCalledWith(1, 'CS1231', { archiveStatus: false });
-
-    expect(component.archivedCourses.length).toEqual(0);
-    expect(component.activeCourses.length).toEqual(1);
-    expect(component.activeCourses[0].course.courseId).toEqual('CS1231');
-  });
-
   it('should restore a soft deleted course', () => {
     component.softDeletedCourses = [courseModelCS1231];
     expect(component.softDeletedCourses.length).toEqual(1);
