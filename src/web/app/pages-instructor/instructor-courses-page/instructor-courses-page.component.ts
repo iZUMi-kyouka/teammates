@@ -260,33 +260,6 @@ export class InstructorCoursesPageComponent implements OnInit {
   }
 
   /**
-   * Changes the status of an archived course.
-   */
-  changeArchiveStatus(courseId: string, toArchive: boolean): void {
-    if (!courseId) {
-      this.statusMessageService.showErrorToast(`Course ${courseId} is not found!`);
-      return;
-    }
-    this.courseService.changeArchiveStatus(courseId, {
-      archiveStatus: toArchive,
-    }).subscribe({
-      next: (courseArchive: CourseArchive) => {
-        if (courseArchive.isArchived) {
-          this.changeModelFromActiveToArchived(courseId);
-          this.statusMessageService.showSuccessToast(`The course ${courseId} has been archived. `
-          + 'It will not appear on the home page anymore.');
-        } else {
-          this.changeModelFromArchivedToActive(courseId);
-          this.statusMessageService.showSuccessToast('The course has been unarchived.');
-        }
-      },
-      error: (resp: ErrorMessageOutput) => {
-        this.statusMessageService.showErrorToast(resp.error.message);
-      },
-    });
-  }
-
-  /**
    * Moves a course model from active courses list to archived list.
    * This is to reduce the need to refresh the entire list of courses multiple times.
    */

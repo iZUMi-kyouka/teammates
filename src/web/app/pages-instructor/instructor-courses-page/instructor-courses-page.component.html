@@ -160,12 +160,6 @@
                         [disabled]="isCopyingCourse">
                         Copy
                       </button>
-                      <button id="btn-archive-{{ i }}" class="btn btn-primary btn-sm dropdown-item clickable"
-                        (click)="changeArchiveStatus(course.course.courseId, true)"
-                        ngbTooltip="Archive the course so that it will not be shown in the home page any more (you can still access it from the 'Courses' tab)"
-                        placement="left" container="body">
-                        Archive
-                      </button>
                       <a class="btn btn-primary btn-sm dropdown-item clickable" *ngIf="course.course.privileges?.canModifyInstructor && course.course.isMigrated"
                       tmRouterLink='/web/instructor/courses/student-activity-logs' [queryParams]="{courseid: course.course.courseId}">
                       View Logs
@@ -277,10 +271,6 @@
                   | date:'d MMM yyyy'}}</span>
               </td>
               <td class="text-center actions-cell">
-                <button id="btn-unarchive-{{ i }}" class="btn btn-light btn-sm custom-button-archived"
-                  (click)="changeArchiveStatus(course.course.courseId, false)">
-                  Unarchive
-                </button>
                 <button id="btn-soft-delete-archived-{{ i }}" class="btn btn-light btn-sm custom-button-archived" *ngIf="course.canModifyCourse"
                   (click)="onDelete(course.course.courseId)"
                   ngbTooltip="Delete the course and its corresponding students and sessions">
