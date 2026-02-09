@@ -1,0 +1,2 @@
+* * * * * curl -s --header 'Backdoor-Key: samplekey' http://host.docker.internal:8080/auto/updateFeedbackSessionLogs?user=app_admin@gmail.com
+* * * * * sleep 30; curl -s --header 'Backdoor-Key: samplekey' http://host.docker.internal:8080/auto/updateFeedbackSessionLogs?user=app_admin@gmail.com
