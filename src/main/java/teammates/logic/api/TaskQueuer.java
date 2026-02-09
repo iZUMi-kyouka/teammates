@@ -8,6 +8,7 @@ import teammates.common.util.Config;
 import teammates.common.util.Const.ParamsNames;
 import teammates.common.util.Const.TaskQueue;
 import teammates.common.util.EmailWrapper;
+import teammates.common.util.HibernateUtil;
 import teammates.common.util.Logger;
 import teammates.common.util.TaskWrapper;
 import teammates.logic.external.GoogleCloudTasksService;
@@ -240,9 +241,10 @@ public class TaskQueuer {
         Map<String, String> paramMap = new HashMap<>();
         paramMap.put(ParamsNames.COURSE_ID, courseId);
         paramMap.put(ParamsNames.STUDENT_EMAIL, email);
-
-        addTask(TaskQueue.SEARCH_INDEXING_QUEUE_NAME, TaskQueue.STUDENT_SEARCH_INDEXING_WORKER_URL,
-                paramMap, null);
+        HibernateUtil.runAfterCommit(() -> {
+            addTask(TaskQueue.SEARCH_INDEXING_QUEUE_NAME, TaskQueue.STUDENT_SEARCH_INDEXING_WORKER_URL,
+                    paramMap, null);
+        });
     }
 
     private void scheduleEmailForSending(EmailWrapper email, long emailDelayTimer) {
