@@ -163,5 +163,5 @@ jobs:
             serviceusage.googleapis.com \
             --project=teammates-staging-487205          
 
-      - name: Deploy to App Engine
+      - name: Deploy to App Engine (Staging)
         run: ./gradlew appengineDeployAll
