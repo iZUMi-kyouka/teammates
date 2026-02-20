@@ -145,6 +145,7 @@ public final class Config {
         String appVersion = properties.getProperty("app.version");
         String appId = properties.getProperty("app.id");
         IS_DEV_SERVER = isDevServer(appVersion, appId);
+        SecretManagerServiceClient gcpSecretClient = null;
 
         Properties devProperties = new Properties();
         if (IS_DEV_SERVER) {
@@ -160,24 +161,30 @@ public final class Config {
         } else {
             APP_ID = appId;
             APP_VERSION = appVersion;
+
+            try {
+                gcpSecretClient = SecretManagerServiceClient.create();
+            } catch (IOException e) {
+                throw new ExceptionInInitializerError("Failed to create GCP Secret Manager client.");
+            }
         }
 
         APP_REGION = getProperty(properties, devProperties, "app.region");
         APP_FRONTEND_URL = getProperty(properties, devProperties, "app.frontend.url", getDefaultFrontEndUrl());
-        CSRF_KEY = getGcpSecret(properties, devProperties, "app.csrf.key");
-        BACKDOOR_KEY = getGcpSecret(properties, devProperties, "app.backdoor.key");
+        CSRF_KEY = getGcpSecret(properties, devProperties, gcpSecretClient, "app.csrf.key");
+        BACKDOOR_KEY = getGcpSecret(properties, devProperties, gcpSecretClient, "app.backdoor.key");
         PRODUCTION_GCS_BUCKETNAME = getProperty(properties, devProperties, "app.production.gcs.bucketname");
         POSTGRES_HOST = getProperty(properties, devProperties, "app.postgres.host");
         POSTGRES_PORT = getProperty(properties, devProperties, "app.postgres.port");
         POSTGRES_DATABASENAME = getProperty(properties, devProperties, "app.postgres.databasename");
-        POSTGRES_USERNAME = getGcpSecret(properties, devProperties, "app.postgres.username");
-        POSTGRES_PASSWORD = getGcpSecret(properties, devProperties, "app.postgres.password");
+        POSTGRES_USERNAME = getGcpSecret(properties, devProperties, gcpSecretClient, "app.postgres.username");
+        POSTGRES_PASSWORD = getGcpSecret(properties, devProperties, gcpSecretClient, "app.postgres.password");
         BACKUP_GCS_BUCKETNAME = getProperty(properties, devProperties, "app.backup.gcs.bucketname");
-        ENCRYPTION_KEY = getGcpSecret(properties, devProperties, "app.encryption.key");
+        ENCRYPTION_KEY = getGcpSecret(properties, devProperties, gcpSecretClient, "app.encryption.key");
         AUTH_TYPE = getProperty(properties, devProperties, "app.auth.type");
-        OAUTH2_CLIENT_ID = getGcpSecret(properties, devProperties, "app.oauth2.client.id");
-        OAUTH2_CLIENT_SECRET = getGcpSecret(properties, devProperties, "app.oauth2.client.secret");
-        CAPTCHA_SECRET_KEY = getGcpSecret(properties, devProperties, "app.captcha.secretkey");
+        OAUTH2_CLIENT_ID = getGcpSecret(properties, devProperties, gcpSecretClient, "app.oauth2.client.id");
+        OAUTH2_CLIENT_SECRET = getGcpSecret(properties, devProperties, gcpSecretClient, "app.oauth2.client.secret");
+        CAPTCHA_SECRET_KEY = getGcpSecret(properties, devProperties, gcpSecretClient, "app.captcha.secretkey");
         APP_ADMINS = Collections.unmodifiableList(
                 Arrays.asList(getProperty(properties, devProperties, "app.admins", "").split(",")));
         APP_MAINTAINERS = Collections.unmodifiableList(
@@ -187,11 +194,11 @@ public final class Config {
         EMAIL_SENDERNAME = getProperty(properties, devProperties, "app.email.sendername");
         EMAIL_REPLYTO = getProperty(properties, devProperties, "app.email.replyto");
         EMAIL_SERVICE = getProperty(properties, devProperties, "app.email.service");
-        SENDGRID_APIKEY = getGcpSecret(properties, devProperties, "app.sendgrid.apikey");
-        MAILGUN_APIKEY = getGcpSecret(properties, devProperties, "app.mailgun.apikey");
+        SENDGRID_APIKEY = getGcpSecret(properties, devProperties, gcpSecretClient, "app.sendgrid.apikey");
+        MAILGUN_APIKEY = getGcpSecret(properties, devProperties, gcpSecretClient, "app.mailgun.apikey");
         MAILGUN_DOMAINNAME = getProperty(properties, devProperties, "app.mailgun.domainname");
-        MAILJET_APIKEY = getGcpSecret(properties, devProperties, "app.mailjet.apikey");
-        MAILJET_SECRETKEY = getGcpSecret(properties, devProperties, "app.mailjet.secretkey");
+        MAILJET_APIKEY = getGcpSecret(properties, devProperties, gcpSecretClient, "app.mailjet.apikey");
+        MAILJET_SECRETKEY = getGcpSecret(properties, devProperties, gcpSecretClient, "app.mailjet.secretkey");
         SEARCH_SERVICE_HOST = getProperty(properties, devProperties, "app.search.service.host");
         ENABLE_DATASTORE_BACKUP = Boolean.parseBoolean(
                 getProperty(properties, devProperties, "app.enable.datastore.backup", "false"));
@@ -202,6 +209,10 @@ public final class Config {
         APP_LOCALDATASTORE_PORT = Integer.parseInt(devProperties.getProperty("app.localdatastore.port", "8484"));
         ENABLE_DEVSERVER_LOGIN = Boolean.parseBoolean(devProperties.getProperty("app.enable.devserver.login", "false"));
         TASKQUEUE_ACTIVE = Boolean.parseBoolean(devProperties.getProperty("app.taskqueue.active", "true"));
+
+        if (gcpSecretClient != null) {
+            gcpSecretClient.close();
+        }
     }
 
     private Config() {
@@ -333,7 +344,11 @@ public final class Config {
      * Returns the value of the specified secret from GCP Secret Manager.
      * If it is in dev server, it will return the value from build.properties (or build.dev.properties) file instead.
      */
-    private static String getGcpSecret(Properties properties, Properties devProperties, String secretName) {
+    private static String getGcpSecret(
+            Properties properties,
+            Properties devProperties,
+            SecretManagerServiceClient client,
+            String secretName) {
         // GCP secret name does not support full stop (.) and only supports underscore (_) as separator.
         // So we will replace full stop with underscore when looking for the secret in GCP Secret Manager.
         // In addition, secret names in GCP are capitalised.
@@ -343,14 +358,12 @@ public final class Config {
         }
 
         String gcpSecretName = secretName.toUpperCase().replace('.', '_');
-        try (SecretManagerServiceClient client = SecretManagerServiceClient.create()) {
+        try {
             // "latest" is an alias to the most recently created secret version which is enabled.
             SecretVersionName name = SecretVersionName.of(APP_ID, gcpSecretName,"latest");
             AccessSecretVersionResponse response = client.accessSecretVersion(name);
 
             return response.getPayload().getData().toStringUtf8();
-        } catch (IOException e) {
-            log.severe("Failed to access secret: " + gcpSecretName, e);
         } catch (ApiException ae) {
             if (ae.getStatusCode().getCode() == StatusCode.Code.NOT_FOUND) {
                 log.warning("Secret not found: " + gcpSecretName);
