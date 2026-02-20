@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.cloud.secretmanager.v1.AccessSecretVersionResponse;
 import com.google.cloud.secretmanager.v1.SecretManagerServiceClient;
 import com.google.cloud.secretmanager.v1.SecretVersionName;
@@ -350,7 +352,15 @@ public final class Config {
             return response.getPayload().getData().toStringUtf8();
         } catch (IOException e) {
             log.severe("Failed to access secret: " + secretName, e);
-            return null;
+        } catch (ApiException ae) {
+            if (ae.getStatusCode().getCode() == StatusCode.Code.NOT_FOUND) {
+                log.warning("Secret not found: " + secretName);
+            } else {
+                log.severe("Failed to access secret: " + secretName, ae);
+                throw ae;
+            }
         }
+
+        return null;
     }
 }
