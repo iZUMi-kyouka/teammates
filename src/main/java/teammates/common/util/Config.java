@@ -342,21 +342,20 @@ public final class Config {
             return getProperty(properties, devProperties, secretName);
         }
 
+        String gcpSecretName = secretName.toUpperCase().replace('.', '_');
         try (SecretManagerServiceClient client = SecretManagerServiceClient.create()) {
-            SecretVersionName name = SecretVersionName.of(
-                    APP_ID,
-                    secretName.toUpperCase().replace('.', '_'),
-                    "latest");
+            // "latest" is an alias to the most recently created secret version which is enabled.
+            SecretVersionName name = SecretVersionName.of(APP_ID, gcpSecretName,"latest");
             AccessSecretVersionResponse response = client.accessSecretVersion(name);
 
             return response.getPayload().getData().toStringUtf8();
         } catch (IOException e) {
-            log.severe("Failed to access secret: " + secretName, e);
+            log.severe("Failed to access secret: " + gcpSecretName, e);
         } catch (ApiException ae) {
             if (ae.getStatusCode().getCode() == StatusCode.Code.NOT_FOUND) {
-                log.warning("Secret not found: " + secretName);
+                log.warning("Secret not found: " + gcpSecretName);
             } else {
-                log.severe("Failed to access secret: " + secretName, ae);
+                log.severe("Failed to access secret: " + gcpSecretName, ae);
                 throw ae;
             }
         }
