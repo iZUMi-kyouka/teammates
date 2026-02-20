@@ -426,6 +426,26 @@ task deployCi {
             )
         }
         appYaml.text = content
+
+        def propFile = file("src/main/resources/build.properties")
+        def propsContent = """
+                app.id=${System.getenv("APP_ID")}
+                app.region=${System.getenv("APP_REGION")}
+                app.version=${System.getenv("APP_VERSION")}
+                app.postgres.host=${System.getenv("APP_POSTGRES_HOST")}
+                app.postgres.port=${System.getenv("APP_POSTGRES_PORT")}
+                app.postgres.databasename=${System.getenv("APP_POSTGRES_DATABASENAME")}
+                app.production.gcs.bucketname=${System.getenv("APP_PRODUCTION_GCS_BUCKETNAME")}
+                app.admins=${System.getenv("APP_ADMINS")}
+                app.crashreport.email=${System.getenv("APP_CRASHREPORT_EMAIL")}
+                app.email.replyto=${System.getenv("APP_EMAIL_REPLYTO")}
+                app.email.senderemail=${System.getenv("APP_EMAIL_SENDEREMAIL")}
+                app.email.sendername=${System.getenv("APP_EMAIL_SENDERNAME")}
+                app.maintainers=${System.getenv("APP_MAINTAINERS")}
+                app.search.service.host=${System.getenv("APP_SEARCH_SERVICE_HOST")}
+                app.email.service=${System.getenv("APP_EMAIL_SERVICE")}
+                """.stripIndent().trim()
+        propFile.text = propsContent
     }
     finalizedBy appengineDeployAll
 }
