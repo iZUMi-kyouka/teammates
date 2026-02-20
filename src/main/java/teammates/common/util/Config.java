@@ -194,11 +194,21 @@ public final class Config {
         EMAIL_SENDERNAME = getProperty(properties, devProperties, "app.email.sendername");
         EMAIL_REPLYTO = getProperty(properties, devProperties, "app.email.replyto");
         EMAIL_SERVICE = getProperty(properties, devProperties, "app.email.service");
-        SENDGRID_APIKEY = getGcpSecret(properties, devProperties, gcpSecretClient, "app.sendgrid.apikey");
-        MAILGUN_APIKEY = getGcpSecret(properties, devProperties, gcpSecretClient, "app.mailgun.apikey");
-        MAILGUN_DOMAINNAME = getProperty(properties, devProperties, "app.mailgun.domainname");
-        MAILJET_APIKEY = getGcpSecret(properties, devProperties, gcpSecretClient, "app.mailjet.apikey");
-        MAILJET_SECRETKEY = getGcpSecret(properties, devProperties, gcpSecretClient, "app.mailjet.secretkey");
+        SENDGRID_APIKEY = isUsingSendgrid()
+                ? getGcpSecret(properties, devProperties, gcpSecretClient, "app.sendgrid.apikey")
+                : null;
+        MAILGUN_APIKEY = isUsingMailgun()
+                ? getGcpSecret(properties, devProperties, gcpSecretClient, "app.mailgun.apikey")
+                : null;
+        MAILGUN_DOMAINNAME = isUsingMailgun()
+                ? getProperty(properties, devProperties, "app.mailgun.domainname")
+                : null;
+        MAILJET_APIKEY = isUsingMailjet()
+                ? getGcpSecret(properties, devProperties, gcpSecretClient, "app.mailjet.apikey")
+                : null;
+        MAILJET_SECRETKEY = isUsingMailjet()
+                ? getGcpSecret(properties, devProperties, gcpSecretClient, "app.mailjet.secretkey")
+                : null;
         SEARCH_SERVICE_HOST = getProperty(properties, devProperties, "app.search.service.host");
         ENABLE_DATASTORE_BACKUP = Boolean.parseBoolean(
                 getProperty(properties, devProperties, "app.enable.datastore.backup", "false"));
