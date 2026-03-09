@@ -2,7 +2,9 @@ name: Deploy TEAMMATES Staging
 
 on:
   push:
-    branches: [V9-clean-slate-sql]
+    branches: [V9-clean-slate-sql-staging-cd-test]
+
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -51,7 +53,7 @@ jobs:
       
       # OIDC Authentication
       - id: auth
-        name: Authenticate to Google Cloud
+        name: Authenticate to Google Cloud Platform
         uses: google-github-actions/auth@v1
         with:
           create_credentials_file: true

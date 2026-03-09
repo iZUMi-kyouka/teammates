@@ -155,7 +155,6 @@ public final class Config {
 
         String appVersion = properties.getProperty("app.version");
         String appId = properties.getProperty("app.id");
-        IS_DEV_SERVER = isDevServer(appVersion, appId);
 
         Properties devProperties = new Properties();
         if (IS_DEV_SERVER) {
