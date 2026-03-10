@@ -4,12 +4,14 @@ import org.apache.http.HttpStatus;
 
 import teammates.common.exception.SearchServiceException;
 import teammates.common.util.Const.ParamsNames;
+import teammates.common.util.Logger;
 import teammates.storage.sqlentity.Student;
 
 /**
  * Task queue worker action: performs student search indexing.
  */
 public class StudentSearchIndexingWorkerAction extends AdminOnlyAction {
+    private static Logger logger = Logger.getLogger();
 
     @Override
     public ActionResult execute() {
@@ -21,6 +23,9 @@ public class StudentSearchIndexingWorkerAction extends AdminOnlyAction {
 
     private ActionResult executeWithSql(String courseId, String email) {
         Student student = sqlLogic.getStudentForEmail(courseId, email);
+        if (student == null) {
+            throw new EntityNotFoundException(String.format("Student with email %s not found", email));
+        }
         try {
             sqlLogic.putStudentDocument(student);
         } catch (SearchServiceException e) {

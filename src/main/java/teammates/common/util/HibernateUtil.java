@@ -6,6 +6,8 @@ import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.transaction.Status;
+import jakarta.transaction.Synchronization;
 
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -303,4 +305,20 @@ public final class HibernateUtil {
         getCurrentSession().evict(entity);
     }
 
+    public static void runAfterCommit(Runnable runnable) {
+        Transaction transaction = getCurrentSession().getTransaction();
+        transaction.registerSynchronization(new Synchronization() {
+            @Override
+            public void beforeCompletion() {
+                // Do nothing
+            }
+
+            @Override
+            public void afterCompletion(int status) {
+                if (status == Status.STATUS_COMMITTED) {
+                    runnable.run();
+                }
+            }
+        });
+    }
 }
