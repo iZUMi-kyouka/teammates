@@ -361,8 +361,7 @@ public final class Config {
      */
     private static boolean isDevServer(String appVersion, String appId) {
         // In production server, GAE sets some non-overrideable environment variables.
-        // We will make use of some of them to determine whether the server is dev
-        // server or not.
+        // We will make use of some of them to determine whether the server is dev server or not.
         // This means that any developer can replicate this condition in dev server,
         // but it is their own choice and risk should they choose to do so.
 
