@@ -36,10 +36,10 @@ public class UserProvision {
         }
 
         String userId = user.id;
-        user.isAdmin = Config.APP_ADMINS.contains(userId);
+        user.isAdmin = Config.getAppAdmins().contains(userId);
         user.isInstructor = usersLogic.isInstructorInAnyCourse(userId);
         user.isStudent = usersLogic.isStudentInAnyCourse(userId);
-        user.isMaintainer = Config.APP_MAINTAINERS.contains(user.getId());
+        user.isMaintainer = Config.getAppMaintainers().contains(user.getId());
         return user;
     }
 
@@ -73,7 +73,7 @@ public class UserProvision {
         userInfo.isAdmin = false;
         userInfo.isInstructor = usersLogic.isInstructorInAnyCourse(googleId);
         userInfo.isStudent = usersLogic.isStudentInAnyCourse(googleId);
-        userInfo.isMaintainer = Config.APP_MAINTAINERS.contains(googleId);
+        userInfo.isMaintainer = Config.getAppMaintainers().contains(googleId);
         return userInfo;
     }
 
