@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Map;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,6 +20,7 @@ import com.google.firebase.auth.FirebaseToken;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
 
 import teammates.common.datatransfer.UserInfoCookie;
 import teammates.common.exception.InvalidParametersException;
@@ -35,11 +37,22 @@ public class OAuth2CallbackServlet extends AuthServlet {
 
     private static final Logger log = Logger.getLogger();
 
+    private OidcProviderRegistry oidcRegistry;
+
+    @Override
+    public void init() throws ServletException {
+        if (Config.isUsingOidc()) {
+            oidcRegistry = OidcProviderRegistry.load();
+        }
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         AuthResult authResult;
         if (Config.isUsingFirebase()) {
             authResult = getFirebaseAuthResult(req, resp);
+        } else if (Config.isUsingOidc()) {
+            authResult = getOidcAuthResult(req, resp);
         } else {
             authResult = getGoogleOauth2AuthResult(req, resp);
         }
@@ -147,6 +160,57 @@ public class OAuth2CallbackServlet extends AuthServlet {
                 log.warning("Invalid user ID token", e);
             }
         }
+        return new AuthResult(email, nextUrl);
+    }
+
+    private AuthResult getOidcAuthResult(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String error = req.getParameter("error");
+        if (error != null) {
+            logAndPrintError(req, resp, HttpStatus.SC_INTERNAL_SERVER_ERROR, error);
+            return null;
+        }
+
+        String code = req.getParameter("code");
+        String state = req.getParameter("state");
+        if (code == null || state == null) {
+            logAndPrintError(req, resp, HttpStatus.SC_BAD_REQUEST, "Missing authorization code");
+            return null;
+        }
+
+        String nextUrl = "/";
+        OidcAuthHandler handler;
+        try {
+            AuthState authState = JsonUtils.fromJson(StringHelper.decrypt(state), AuthState.class);
+            if (authState.getNextUrl() != null) {
+                nextUrl = authState.getNextUrl();
+            }
+            String sessionId = authState.getSessionId();
+            if (!sessionId.equals(req.getSession().getId())) {
+                log.warning(String.format("OIDC session ID mismatch: expected %s, got %s",
+                        sessionId, req.getSession().getId()));
+                logAndPrintError(req, resp, HttpStatus.SC_BAD_REQUEST, "Invalid authorization code");
+                return null;
+            }
+            String providerId = authState.getProviderId();
+            handler = oidcRegistry.get(providerId);
+            if (handler == null) {
+                logAndPrintError(req, resp, HttpStatus.SC_BAD_REQUEST, "Unknown OIDC provider");
+                return null;
+            }
+        } catch (JsonParseException | InvalidParametersException e) {
+            log.warning("Failed to parse OIDC state object", e);
+            logAndPrintError(req, resp, HttpStatus.SC_BAD_REQUEST, "Bad state object");
+            return null;
+        }
+
+        String redirectUri = getOidcRedirectUri(req);
+        OIDCTokens tokens = handler.exchangeCode(code, redirectUri);
+        if (tokens == null) {
+            logAndPrintError(req, resp, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Token exchange failed");
+            return null;
+        }
+
+        String email = handler.validateIdToken(tokens.getIDToken());
         return new AuthResult(email, nextUrl);
     }
 
