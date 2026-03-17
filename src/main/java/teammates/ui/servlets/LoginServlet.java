@@ -1,7 +1,9 @@
 package teammates.ui.servlets;
 
 import java.io.IOException;
+import java.net.URI;
 
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -23,6 +25,15 @@ import teammates.common.util.StringHelper;
 public class LoginServlet extends AuthServlet {
 
     private static final Logger log = Logger.getLogger();
+
+    private OidcProviderRegistry oidcRegistry;
+
+    @Override
+    public void init() throws ServletException {
+        if (Config.isUsingOidc()) {
+            oidcRegistry = OidcProviderRegistry.load();
+        }
+    }
 
     @Override
     public void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -54,6 +65,22 @@ public class LoginServlet extends AuthServlet {
             // nextUrl query param is encoded to retain its full value as the nextUrl may contain query params
             resp.sendRedirect("/web/login?nextUrl="
                     + nextUrl.replace("?", "%3f").replace("&", "%26"));
+        } else if (Config.isUsingOidc()) {
+            String providerId = req.getParameter("provider");
+            OidcAuthHandler handler = oidcRegistry.get(providerId);
+            if (handler == null) {
+                resp.setStatus(HttpStatus.SC_BAD_REQUEST);
+                resp.getWriter().print("Unknown OIDC provider");
+                log.request(req, HttpStatus.SC_BAD_REQUEST, "Unknown OIDC provider");
+                return;
+            }
+
+            AuthState state = new AuthState(nextUrl, req.getSession().getId(), handler.getProviderId());
+            String encryptedState = StringHelper.encrypt(JsonUtils.toCompactJson(state));
+            URI authUri = handler.buildAuthorizationUri(encryptedState, getOidcRedirectUri(req));
+
+            log.request(req, HttpStatus.SC_MOVED_TEMPORARILY, "Redirect to OIDC provider");
+            resp.sendRedirect(authUri.toString());
         } else {
             AuthState state = new AuthState(nextUrl, req.getSession().getId());
             AuthorizationCodeRequestUrl authorizationUrl = getAuthorizationFlow().newAuthorizationUrl();
