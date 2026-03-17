@@ -64,6 +64,9 @@ public final class Config {
     /** The value of the "app.oauth2.client.secret" in build.properties file. */
     public static final String OAUTH2_CLIENT_SECRET;
 
+    /** Comma-separated OIDC provider IDs. Only relevant when AUTH_TYPE is "oidc". */
+    public static final String OIDC_PROVIDERS;
+
     /** The value of the "app.captcha.secretkey" in build.properties file. */
     public static final String CAPTCHA_SECRET_KEY;
 
@@ -162,6 +165,7 @@ public final class Config {
         AUTH_TYPE = getProperty(properties, devProperties, "app.auth.type");
         OAUTH2_CLIENT_ID = getProperty(properties, devProperties, "app.oauth2.client.id");
         OAUTH2_CLIENT_SECRET = getProperty(properties, devProperties, "app.oauth2.client.secret");
+        OIDC_PROVIDERS = getProperty(properties, devProperties, "app.oidc.providers", "");
         CAPTCHA_SECRET_KEY = getProperty(properties, devProperties, "app.captcha.secretkey");
         APP_ADMINS = Collections.unmodifiableList(
                 Arrays.asList(getProperty(properties, devProperties, "app.admins", "").split(",")));
@@ -303,6 +307,10 @@ public final class Config {
 
     public static boolean isUsingFirebase() {
         return "firebase".equalsIgnoreCase(AUTH_TYPE);
+    }
+
+    public static boolean isUsingOidc() {
+        return "oidc".equalsIgnoreCase(AUTH_TYPE);
     }
 
     /**
