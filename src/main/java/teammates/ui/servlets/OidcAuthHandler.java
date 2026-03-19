@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.jwk.source.JWKSource;
@@ -156,7 +157,7 @@ class OidcAuthHandler {
 
             // Accept RS256 and ES256; alg=none is rejected by Nimbus
             JWSVerificationKeySelector<SecurityContext> keySelector = new JWSVerificationKeySelector<>(
-                    new java.util.HashSet<>(java.util.Arrays.asList(JWSAlgorithm.RS256, JWSAlgorithm.ES256)),
+                    Set.of(JWSAlgorithm.RS256, JWSAlgorithm.ES256),
                     jwkSource);
             jwtProcessor.setJWSKeySelector(keySelector);
 
