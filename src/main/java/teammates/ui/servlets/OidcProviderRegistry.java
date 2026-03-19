@@ -1,7 +1,6 @@
 package teammates.ui.servlets;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -9,8 +8,6 @@ import java.util.Properties;
 import jakarta.servlet.ServletException;
 
 import teammates.common.util.Config;
-import teammates.common.util.FileHelper;
-import teammates.common.util.Logger;
 
 /**
  * Registry of configured OIDC providers.
@@ -24,8 +21,6 @@ import teammates.common.util.Logger;
  * optional and the single provider is used as the default.
  */
 final class OidcProviderRegistry {
-
-    private static final Logger log = Logger.getLogger();
 
     private static OidcProviderRegistry cachedInstance;
 
@@ -43,35 +38,12 @@ final class OidcProviderRegistry {
      * @throws ServletException if no providers are configured or a provider fails to initialise
      */
     static OidcProviderRegistry load() throws ServletException {
-        Properties properties = new Properties();
-        try (InputStream buildPropStream = FileHelper.getResourceAsStream("build.properties")) {
-            properties.load(buildPropStream);
-        } catch (IOException e) {
-            throw new ServletException("Failed to load build.properties for OIDC configuration", e);
-        }
-
-        // Also load dev overrides when available
-        Properties devProperties = new Properties();
-        if (Config.IS_DEV_SERVER) {
-            try (InputStream devPropStream = FileHelper.getResourceAsStream("build-dev.properties")) {
-                if (devPropStream != null) {
-                    devProperties.load(devPropStream);
-                }
-            } catch (IOException e) {
-                log.warning("Could not load build-dev.properties for OIDC configuration");
-            }
-        }
-
-        // Merge: dev overrides take precedence
-        Properties merged = new Properties(properties);
-        merged.putAll(devProperties);
-
-        String providerListRaw = merged.getProperty("app.oidc.providers", Config.OIDC_PROVIDERS);
-        if (providerListRaw == null || providerListRaw.trim().isEmpty()) {
+        if (Config.OIDC_PROVIDERS == null || Config.OIDC_PROVIDERS.trim().isEmpty()) {
             throw new ServletException("app.auth.type=oidc but app.oidc.providers is not configured");
         }
 
-        String[] ids = providerListRaw.split(",");
+        Properties oidcProperties = Config.getOidcProperties();
+        String[] ids = Config.OIDC_PROVIDERS.split(",");
         Map<String, OidcAuthHandler> handlers = new LinkedHashMap<>();
         for (String rawId : ids) {
             String id = rawId.trim();
@@ -79,7 +51,7 @@ final class OidcProviderRegistry {
                 continue;
             }
             try {
-                OidcProviderConfig config = OidcProviderConfig.fromProperties(merged, id);
+                OidcProviderConfig config = OidcProviderConfig.fromProperties(oidcProperties, id);
                 handlers.put(id, new OidcAuthHandler(config));
             } catch (IOException | IllegalArgumentException e) {
                 throw new ServletException("Failed to initialise OIDC handler for provider '" + id + "'", e);

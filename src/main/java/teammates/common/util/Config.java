@@ -122,6 +122,8 @@ public final class Config {
 
     private static final Logger log = Logger.getLogger();
 
+    private static final Properties OIDC_PROPERTIES;
+
     static {
         Properties properties = new Properties();
         try (InputStream buildPropStream = FileHelper.getResourceAsStream("build.properties")) {
@@ -187,6 +189,19 @@ public final class Config {
         // So they will only be read from build-dev.properties file.
         ENABLE_DEVSERVER_LOGIN = Boolean.parseBoolean(devProperties.getProperty("app.enable.devserver.login", "false"));
         TASKQUEUE_ACTIVE = Boolean.parseBoolean(devProperties.getProperty("app.taskqueue.active", "true"));
+
+        Properties oidcProps = new Properties();
+        for (String key : properties.stringPropertyNames()) {
+            if (key.startsWith("app.oidc.")) {
+                oidcProps.setProperty(key, properties.getProperty(key));
+            }
+        }
+        for (String key : devProperties.stringPropertyNames()) {
+            if (key.startsWith("app.oidc.")) {
+                oidcProps.setProperty(key, devProperties.getProperty(key));
+            }
+        }
+        OIDC_PROPERTIES = oidcProps;
     }
 
     private Config() {
@@ -271,6 +286,11 @@ public final class Config {
 
         // GAE flexible; GAE_ENV variable should not exist in GAE flexible environment
         return env != null;
+    }
+
+    /** Returns all {@code app.oidc.*} properties, with dev overrides applied. */
+    public static Properties getOidcProperties() {
+        return OIDC_PROPERTIES;
     }
 
     /**

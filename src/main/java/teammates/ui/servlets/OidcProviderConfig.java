@@ -19,8 +19,8 @@ final class OidcProviderConfig {
     final String emailClaim;
     final List<String> additionalScopes;
     final String authorizationEndpointOverride; // app.oidc.{id}.override.authorization.endpoint
-    final String tokenEndpointOverride;          // app.oidc.{id}.override.token.endpoint
-    final String jwksEndpointOverride;           // app.oidc.{id}.override.jwks.endpoint
+    final String tokenEndpointOverride; // app.oidc.{id}.override.token.endpoint
+    final String jwksEndpointOverride; // app.oidc.{id}.override.jwks.endpoint
 
     private OidcProviderConfig(String id, String issuerUrl, String clientId, String clientSecret,
             String emailClaim, List<String> additionalScopes,
