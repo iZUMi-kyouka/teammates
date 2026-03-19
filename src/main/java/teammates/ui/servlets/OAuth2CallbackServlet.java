@@ -3,6 +3,7 @@ package teammates.ui.servlets;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Locale;
 import java.util.Map;
 
 import jakarta.servlet.ServletException;
@@ -42,7 +43,7 @@ public class OAuth2CallbackServlet extends AuthServlet {
     @Override
     public void init() throws ServletException {
         if (Config.isUsingOidc()) {
-            oidcRegistry = OidcProviderRegistry.load();
+            oidcRegistry = OidcProviderRegistry.getInstance();
         }
     }
 
@@ -210,7 +211,8 @@ public class OAuth2CallbackServlet extends AuthServlet {
             return null;
         }
 
-        String email = handler.validateIdToken(tokens.getIDToken());
+        String emailRaw = handler.validateIdToken(tokens.getIDToken());
+        String email = emailRaw != null ? emailRaw.toLowerCase(Locale.ROOT) : null;
         return new AuthResult(email, nextUrl);
     }
 
