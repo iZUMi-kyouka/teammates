@@ -6,7 +6,6 @@ import java.net.URISyntaxException;
 import java.util.Locale;
 import java.util.Map;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -37,15 +36,6 @@ import teammates.common.util.StringHelper;
 public class OAuth2CallbackServlet extends AuthServlet {
 
     private static final Logger log = Logger.getLogger();
-
-    private OidcProviderRegistry oidcRegistry;
-
-    @Override
-    public void init() throws ServletException {
-        if (Config.isUsingOidc()) {
-            oidcRegistry = OidcProviderRegistry.getInstance();
-        }
-    }
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -195,7 +185,7 @@ public class OAuth2CallbackServlet extends AuthServlet {
                 return null;
             }
             String providerId = authState.getProviderId();
-            handler = oidcRegistry.get(providerId);
+            handler = OidcProviderRegistry.getHandler(providerId);
             if (handler == null) {
                 logAndPrintError(req, resp, HttpStatus.SC_BAD_REQUEST, "Unknown OIDC provider");
                 return null;

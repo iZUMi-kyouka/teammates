@@ -1,11 +1,8 @@
 package teammates.ui.servlets;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.net.URI;
@@ -29,9 +26,11 @@ import teammates.test.MockHttpServletResponse;
 public class LoginServletOidcTest extends BaseTestCase {
 
     private MockedStatic<Config> mockConfig;
+    private MockedStatic<OidcProviderRegistry> mockOidcRegistry;
 
     @BeforeMethod
     public void setup() {
+        mockOidcRegistry = mockStatic(OidcProviderRegistry.class);
         mockConfig = mockStatic(Config.class);
         mockConfig.when(Config::isDevServerLoginEnabled).thenReturn(false);
         mockConfig.when(Config::isUsingFirebase).thenReturn(false);
@@ -41,23 +40,15 @@ public class LoginServletOidcTest extends BaseTestCase {
     @AfterMethod
     public void teardown() {
         mockConfig.close();
-    }
-
-    private LoginServlet buildServletWithRegistry(OidcProviderRegistry registry) throws Exception {
-        LoginServlet servlet = new LoginServlet();
-        java.lang.reflect.Field f = LoginServlet.class.getDeclaredField("oidcRegistry");
-        f.setAccessible(true);
-        f.set(servlet, registry);
-        return servlet;
+        mockOidcRegistry.close();
     }
 
     @Test
     public void testDoGet_unknownOidcProvider_returns400() throws Exception {
-        OidcProviderRegistry registry = mock(OidcProviderRegistry.class);
-        when(registry.get(anyString())).thenReturn(null);
-        when(registry.get(null)).thenReturn(null);
+        mockOidcRegistry.when(() -> OidcProviderRegistry.getHandler(anyString())).thenReturn(null);
+        mockOidcRegistry.when(() -> OidcProviderRegistry.getHandler(null)).thenReturn(null);
 
-        LoginServlet servlet = buildServletWithRegistry(registry);
+        LoginServlet servlet = new LoginServlet();
 
         MockHttpServletRequest req = new MockHttpServletRequest("GET",
                 "https://teammates.example.com/login");
@@ -76,14 +67,13 @@ public class LoginServletOidcTest extends BaseTestCase {
         when(handler.buildAuthorizationUri(anyString(), anyString()))
                 .thenReturn(URI.create("https://provider.example.com/authorize?response_type=code"));
 
-        OidcProviderRegistry registry = mock(OidcProviderRegistry.class);
-        when(registry.get(null)).thenReturn(handler);
-        when(registry.get("default")).thenReturn(handler);
+        mockOidcRegistry.when(() -> OidcProviderRegistry.getHandler(null)).thenReturn(handler);
+        mockOidcRegistry.when(() -> OidcProviderRegistry.getHandler("default")).thenReturn(handler);
 
         HttpSession session = mock(HttpSession.class);
         when(session.getId()).thenReturn("session-abc");
 
-        LoginServlet servlet = buildServletWithRegistry(registry);
+        LoginServlet servlet = new LoginServlet();
 
         MockHttpServletRequest req = new MockHttpServletRequest("GET",
                 "https://teammates.example.com/login") {
@@ -109,8 +99,7 @@ public class LoginServletOidcTest extends BaseTestCase {
     @Test
     public void testDoGet_validCookiePresent_skipOidc() throws Exception {
         // When the user already has a valid auth cookie, LoginServlet skips OIDC entirely
-        OidcProviderRegistry registry = mock(OidcProviderRegistry.class);
-        LoginServlet servlet = buildServletWithRegistry(registry);
+        LoginServlet servlet = new LoginServlet();
 
         // Build a valid auth cookie value
         teammates.common.datatransfer.UserInfoCookie uic =
@@ -128,6 +117,6 @@ public class LoginServletOidcTest extends BaseTestCase {
         servlet.doGet(req, resp);
 
         // OIDC registry should never be consulted
-        verify(registry, never()).get(any());
+        mockOidcRegistry.verifyNoInteractions();
     }
 }

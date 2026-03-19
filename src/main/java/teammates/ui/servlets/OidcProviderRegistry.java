@@ -22,7 +22,20 @@ import teammates.common.util.Config;
  */
 final class OidcProviderRegistry {
 
-    private static OidcProviderRegistry cachedInstance;
+    private static final OidcProviderRegistry instance;
+
+    static {
+        OidcProviderRegistry registry = null;
+        if ("oidc".equalsIgnoreCase(Config.AUTH_TYPE) && Config.OIDC_PROVIDERS != null
+                && !Config.OIDC_PROVIDERS.trim().isEmpty()) {
+            try {
+                registry = load();
+            } catch (ServletException e) {
+                throw new ExceptionInInitializerError(e);
+            }
+        }
+        instance = registry;
+    }
 
     private final Map<String, OidcAuthHandler> handlers;
     private final String defaultId;
@@ -67,26 +80,19 @@ final class OidcProviderRegistry {
     }
 
     /**
-     * Returns the shared registry instance, loading it on the first call.
-     * Subsequent calls return the cached instance without repeating network I/O.
-     *
-     * <p>Safe to call without synchronization because servlet {@code init()} is
-     * guaranteed to run in a single thread.
-     */
-    static OidcProviderRegistry getInstance() throws ServletException {
-        if (cachedInstance == null) {
-            cachedInstance = load();
-        }
-        return cachedInstance;
-    }
-
-    /**
      * Returns the handler for the given provider ID.
      *
      * <p>If {@code id} is {@code null} or blank, the default (first configured) provider is
      * returned.  Returns {@code null} when the given ID is non-blank but unknown.
      */
-    OidcAuthHandler get(String id) {
+    static OidcAuthHandler getHandler(String id) {
+        if (instance == null) {
+            return null;
+        }
+        return instance.findHandler(id);
+    }
+
+    private OidcAuthHandler findHandler(String id) {
         if (id == null || id.trim().isEmpty()) {
             return handlers.get(defaultId);
         }

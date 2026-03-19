@@ -31,9 +31,11 @@ public class OAuth2CallbackServletOidcTest extends BaseTestCase {
     private static final String SESSION_ID = "session-oidc-test";
 
     private MockedStatic<Config> mockConfig;
+    private MockedStatic<OidcProviderRegistry> mockOidcRegistry;
 
     @BeforeMethod
     public void setup() {
+        mockOidcRegistry = mockStatic(OidcProviderRegistry.class);
         mockConfig = mockStatic(Config.class);
         mockConfig.when(Config::isUsingFirebase).thenReturn(false);
         mockConfig.when(Config::isUsingOidc).thenReturn(true);
@@ -42,6 +44,7 @@ public class OAuth2CallbackServletOidcTest extends BaseTestCase {
     @AfterMethod
     public void teardown() {
         mockConfig.close();
+        mockOidcRegistry.close();
     }
 
     private MockHttpServletRequest buildCallbackRequest(String code, String state, String error,
@@ -81,35 +84,25 @@ public class OAuth2CallbackServletOidcTest extends BaseTestCase {
         return StringHelper.encrypt(JsonUtils.toCompactJson(state));
     }
 
-    private OAuth2CallbackServlet buildServletWithRegistry(OidcProviderRegistry registry) throws Exception {
-        OAuth2CallbackServlet servlet = new OAuth2CallbackServlet();
-        java.lang.reflect.Field f = OAuth2CallbackServlet.class.getDeclaredField("oidcRegistry");
-        f.setAccessible(true);
-        f.set(servlet, registry);
-        return servlet;
-    }
-
     @Test
     public void testGetOidcAuthResult_errorParam_returns500() throws Exception {
-        OAuth2CallbackServlet servlet = buildServletWithRegistry(mock(OidcProviderRegistry.class));
         HttpSession session = buildSession(SESSION_ID);
         MockHttpServletRequest req = buildCallbackRequest(null, null, "access_denied", session);
         MockHttpServletResponse resp = new MockHttpServletResponse();
 
-        servlet.doGet(req, resp);
+        new OAuth2CallbackServlet().doGet(req, resp);
 
         assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, resp.getStatus());
     }
 
     @Test
     public void testGetOidcAuthResult_errorParam_doesNotReflectUserInput() throws Exception {
-        OAuth2CallbackServlet servlet = buildServletWithRegistry(mock(OidcProviderRegistry.class));
         HttpSession session = buildSession(SESSION_ID);
         String xssPayload = "<script>alert(document.cookie)</script>";
         MockHttpServletRequest req = buildCallbackRequest(null, null, xssPayload, session);
         MockHttpServletResponse resp = new MockHttpServletResponse();
 
-        servlet.doGet(req, resp);
+        new OAuth2CallbackServlet().doGet(req, resp);
 
         assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, resp.getStatus());
         assertFalse("Response body must not reflect the raw error parameter", resp.getBody().contains(xssPayload));
@@ -117,28 +110,40 @@ public class OAuth2CallbackServletOidcTest extends BaseTestCase {
 
     @Test
     public void testGetOidcAuthResult_missingCode_returns400() throws Exception {
-        OAuth2CallbackServlet servlet = buildServletWithRegistry(mock(OidcProviderRegistry.class));
         HttpSession session = buildSession(SESSION_ID);
         // state present but code missing
         String state = buildEncryptedState("/", SESSION_ID, "default");
         MockHttpServletRequest req = buildCallbackRequest(null, state, null, session);
         MockHttpServletResponse resp = new MockHttpServletResponse();
 
-        servlet.doGet(req, resp);
+        new OAuth2CallbackServlet().doGet(req, resp);
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, resp.getStatus());
     }
 
     @Test
     public void testGetOidcAuthResult_sessionIdMismatch_returns400() throws Exception {
-        OAuth2CallbackServlet servlet = buildServletWithRegistry(mock(OidcProviderRegistry.class));
         // Session now reports a different ID than what was encoded in state
         HttpSession session = buildSession("different-session-id");
         String state = buildEncryptedState("/", SESSION_ID, "default");
         MockHttpServletRequest req = buildCallbackRequest("auth-code", state, null, session);
         MockHttpServletResponse resp = new MockHttpServletResponse();
 
-        servlet.doGet(req, resp);
+        new OAuth2CallbackServlet().doGet(req, resp);
+
+        assertEquals(HttpStatus.SC_BAD_REQUEST, resp.getStatus());
+    }
+
+    @Test
+    public void testGetOidcAuthResult_unknownOidcProvider_returns400() throws Exception {
+        mockOidcRegistry.when(() -> OidcProviderRegistry.getHandler("unknown")).thenReturn(null);
+
+        HttpSession session = buildSession(SESSION_ID);
+        String state = buildEncryptedState("/", SESSION_ID, "unknown");
+        MockHttpServletRequest req = buildCallbackRequest("auth-code", state, null, session);
+        MockHttpServletResponse resp = new MockHttpServletResponse();
+
+        new OAuth2CallbackServlet().doGet(req, resp);
 
         assertEquals(HttpStatus.SC_BAD_REQUEST, resp.getStatus());
     }
@@ -153,16 +158,14 @@ public class OAuth2CallbackServletOidcTest extends BaseTestCase {
         when(handler.exchangeCode(anyString(), anyString())).thenReturn(tokens);
         when(handler.validateIdToken(mockIdToken)).thenReturn("user@example.com");
 
-        OidcProviderRegistry registry = mock(OidcProviderRegistry.class);
-        when(registry.get("default")).thenReturn(handler);
+        mockOidcRegistry.when(() -> OidcProviderRegistry.getHandler("default")).thenReturn(handler);
 
-        OAuth2CallbackServlet servlet = buildServletWithRegistry(registry);
         HttpSession session = buildSession(SESSION_ID);
         String state = buildEncryptedState("/dashboard", SESSION_ID, "default");
         MockHttpServletRequest req = buildCallbackRequest("auth-code", state, null, session);
         MockHttpServletResponse resp = new MockHttpServletResponse();
 
-        servlet.doGet(req, resp);
+        new OAuth2CallbackServlet().doGet(req, resp);
 
         // Should redirect and set a non-empty auth cookie
         assertNotNull(resp.getRedirectUrl());
@@ -182,16 +185,14 @@ public class OAuth2CallbackServletOidcTest extends BaseTestCase {
         // validateIdToken returns null (validation failure)
         when(handler.validateIdToken(mockIdToken)).thenReturn(null);
 
-        OidcProviderRegistry registry = mock(OidcProviderRegistry.class);
-        when(registry.get("default")).thenReturn(handler);
+        mockOidcRegistry.when(() -> OidcProviderRegistry.getHandler("default")).thenReturn(handler);
 
-        OAuth2CallbackServlet servlet = buildServletWithRegistry(registry);
         HttpSession session = buildSession(SESSION_ID);
         String state = buildEncryptedState("/", SESSION_ID, "default");
         MockHttpServletRequest req = buildCallbackRequest("auth-code", state, null, session);
         MockHttpServletResponse resp = new MockHttpServletResponse();
 
-        servlet.doGet(req, resp);
+        new OAuth2CallbackServlet().doGet(req, resp);
 
         // Should redirect and set the invalidation (zero max-age) cookie
         assertNotNull(resp.getRedirectUrl());
