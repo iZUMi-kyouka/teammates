@@ -1,6 +1,7 @@
 package teammates.test;
 
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,8 +14,6 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.http.HttpStatus;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-
 /**
  * Mocks {@link HttpServletResponse} for testing purpose.
  *
@@ -25,6 +24,7 @@ public class MockHttpServletResponse implements HttpServletResponse {
     private int statusCode = HttpStatus.SC_OK;
     private String redirectUrl;
     private List<Cookie> cookies = new ArrayList<>();
+    private final StringWriter bodyWriter = new StringWriter();
 
     @Override
     public void addCookie(Cookie cookie) {
@@ -151,10 +151,12 @@ public class MockHttpServletResponse implements HttpServletResponse {
     }
 
     @Override
-    @SuppressWarnings("PMD.RelianceOnDefaultCharset")
-    @SuppressFBWarnings("DM_DEFAULT_ENCODING")
     public PrintWriter getWriter() {
-        return new PrintWriter(System.out);
+        return new PrintWriter(bodyWriter, true);
+    }
+
+    public String getBody() {
+        return bodyWriter.toString();
     }
 
     @Override

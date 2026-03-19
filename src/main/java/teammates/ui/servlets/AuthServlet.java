@@ -48,9 +48,27 @@ abstract class AuthServlet extends HttpServlet {
      * Returns the redirect URI for the given HTTP servlet request.
      */
     String getRedirectUri(HttpServletRequest req) {
-        GenericUrl url = new GenericUrl(req.getRequestURL().toString().replaceFirst("^http://", "https://"));
+        String requestUrl = Config.IS_DEV_SERVER
+                ? req.getRequestURL().toString()
+                : req.getRequestURL().toString().replaceFirst("^http://", "https://");
+        GenericUrl url = new GenericUrl(requestUrl);
         url.setRawPath("/oauth2callback");
         url.set("ngsw-bypass", "true");
+        return url.build();
+    }
+
+    /**
+     * Returns the redirect URI for OIDC flows.
+     *
+     * <p>Omits the {@code ngsw-bypass} query parameter because OIDC providers typically
+     * reject redirect URIs that contain query strings.
+     */
+    String getOidcRedirectUri(HttpServletRequest req) {
+        String requestUrl = Config.IS_DEV_SERVER
+                ? req.getRequestURL().toString()
+                : req.getRequestURL().toString().replaceFirst("^http://", "https://");
+        GenericUrl url = new GenericUrl(requestUrl);
+        url.setRawPath("/oauth2callback");
         return url.build();
     }
 
@@ -79,10 +97,16 @@ abstract class AuthServlet extends HttpServlet {
     static class AuthState {
         private final String nextUrl;
         private final String sessionId;
+        private final String providerId; // null for googleoauth2/firebase paths
 
         AuthState(String nextUrl, String sessionId) {
+            this(nextUrl, sessionId, null);
+        }
+
+        AuthState(String nextUrl, String sessionId, String providerId) {
             this.nextUrl = nextUrl;
             this.sessionId = sessionId;
+            this.providerId = providerId;
         }
 
         String getNextUrl() {
@@ -91,6 +115,10 @@ abstract class AuthServlet extends HttpServlet {
 
         public String getSessionId() {
             return sessionId;
+        }
+
+        String getProviderId() {
+            return providerId;
         }
     }
 

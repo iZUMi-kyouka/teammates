@@ -3,6 +3,7 @@ package teammates.ui.servlets;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Locale;
 import java.util.Map;
 
 import jakarta.servlet.http.Cookie;
@@ -19,6 +20,7 @@ import com.google.firebase.auth.FirebaseToken;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
 
 import teammates.common.datatransfer.UserInfoCookie;
 import teammates.common.exception.InvalidParametersException;
@@ -40,6 +42,8 @@ public class OAuth2CallbackServlet extends AuthServlet {
         AuthResult authResult;
         if (Config.isUsingFirebase()) {
             authResult = getFirebaseAuthResult(req, resp);
+        } else if (Config.isUsingOidc()) {
+            authResult = getOidcAuthResult(req, resp);
         } else {
             authResult = getGoogleOauth2AuthResult(req, resp);
         }
@@ -74,7 +78,8 @@ public class OAuth2CallbackServlet extends AuthServlet {
         AuthorizationCodeResponseUrl responseUrl =
                 new AuthorizationCodeResponseUrl(buf.toString().replaceFirst("^http://", "https://"));
         if (responseUrl.getError() != null) {
-            logAndPrintError(req, resp, HttpStatus.SC_INTERNAL_SERVER_ERROR, responseUrl.getError());
+            log.warning("OAuth2 provider returned error: " + responseUrl.getError());
+            logAndPrintError(req, resp, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Authorization failed");
             return null;
         }
         String code = responseUrl.getCode();
@@ -150,8 +155,62 @@ public class OAuth2CallbackServlet extends AuthServlet {
         return new AuthResult(email, nextUrl);
     }
 
+    private AuthResult getOidcAuthResult(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        String error = req.getParameter("error");
+        if (error != null) {
+            log.warning("OIDC provider returned error: " + error);
+            logAndPrintError(req, resp, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Authorization failed");
+            return null;
+        }
+
+        String code = req.getParameter("code");
+        String state = req.getParameter("state");
+        if (code == null || state == null) {
+            logAndPrintError(req, resp, HttpStatus.SC_BAD_REQUEST, "Missing authorization code");
+            return null;
+        }
+
+        String nextUrl = "/";
+        OidcAuthHandler handler;
+        try {
+            AuthState authState = JsonUtils.fromJson(StringHelper.decrypt(state), AuthState.class);
+            if (authState.getNextUrl() != null) {
+                nextUrl = authState.getNextUrl();
+            }
+            String sessionId = authState.getSessionId();
+            if (!sessionId.equals(req.getSession().getId())) {
+                log.warning(String.format("OIDC session ID mismatch: expected %s, got %s",
+                        sessionId, req.getSession().getId()));
+                logAndPrintError(req, resp, HttpStatus.SC_BAD_REQUEST, "Invalid authorization code");
+                return null;
+            }
+            String providerId = authState.getProviderId();
+            handler = OidcProviderRegistry.getHandler(providerId);
+            if (handler == null) {
+                logAndPrintError(req, resp, HttpStatus.SC_BAD_REQUEST, "Unknown OIDC provider");
+                return null;
+            }
+        } catch (JsonParseException | InvalidParametersException e) {
+            log.warning("Failed to parse OIDC state object", e);
+            logAndPrintError(req, resp, HttpStatus.SC_BAD_REQUEST, "Bad state object");
+            return null;
+        }
+
+        String redirectUri = getOidcRedirectUri(req);
+        OIDCTokens tokens = handler.exchangeCode(code, redirectUri);
+        if (tokens == null) {
+            logAndPrintError(req, resp, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Token exchange failed");
+            return null;
+        }
+
+        String emailRaw = handler.validateIdToken(tokens.getIDToken());
+        String email = emailRaw != null ? emailRaw.toLowerCase(Locale.ROOT) : null;
+        return new AuthResult(email, nextUrl);
+    }
+
     private void logAndPrintError(HttpServletRequest req, HttpServletResponse resp, int status, String message)
             throws IOException {
+        resp.setContentType("text/plain; charset=UTF-8");
         resp.setStatus(status);
         resp.getWriter().print(message);
 

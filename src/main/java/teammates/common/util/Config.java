@@ -64,6 +64,9 @@ public final class Config {
     /** The value of the "app.oauth2.client.secret" in build.properties file. */
     public static final String OAUTH2_CLIENT_SECRET;
 
+    /** Comma-separated OIDC provider IDs. Only relevant when AUTH_TYPE is "oidc". */
+    public static final String OIDC_PROVIDERS;
+
     /** The value of the "app.captcha.secretkey" in build.properties file. */
     public static final String CAPTCHA_SECRET_KEY;
 
@@ -119,6 +122,8 @@ public final class Config {
 
     private static final Logger log = Logger.getLogger();
 
+    private static final Properties OIDC_PROPERTIES;
+
     static {
         Properties properties = new Properties();
         try (InputStream buildPropStream = FileHelper.getResourceAsStream("build.properties")) {
@@ -162,6 +167,7 @@ public final class Config {
         AUTH_TYPE = getProperty(properties, devProperties, "app.auth.type");
         OAUTH2_CLIENT_ID = getProperty(properties, devProperties, "app.oauth2.client.id");
         OAUTH2_CLIENT_SECRET = getProperty(properties, devProperties, "app.oauth2.client.secret");
+        OIDC_PROVIDERS = getProperty(properties, devProperties, "app.oidc.providers", "");
         CAPTCHA_SECRET_KEY = getProperty(properties, devProperties, "app.captcha.secretkey");
         APP_ADMINS = Collections.unmodifiableList(
                 Arrays.asList(getProperty(properties, devProperties, "app.admins", "").split(",")));
@@ -183,6 +189,19 @@ public final class Config {
         // So they will only be read from build-dev.properties file.
         ENABLE_DEVSERVER_LOGIN = Boolean.parseBoolean(devProperties.getProperty("app.enable.devserver.login", "false"));
         TASKQUEUE_ACTIVE = Boolean.parseBoolean(devProperties.getProperty("app.taskqueue.active", "true"));
+
+        Properties oidcProps = new Properties();
+        for (String key : properties.stringPropertyNames()) {
+            if (key.startsWith("app.oidc.")) {
+                oidcProps.setProperty(key, properties.getProperty(key));
+            }
+        }
+        for (String key : devProperties.stringPropertyNames()) {
+            if (key.startsWith("app.oidc.")) {
+                oidcProps.setProperty(key, devProperties.getProperty(key));
+            }
+        }
+        OIDC_PROPERTIES = oidcProps;
     }
 
     private Config() {
@@ -269,6 +288,11 @@ public final class Config {
         return env != null;
     }
 
+    /** Returns all {@code app.oidc.*} properties, with dev overrides applied. */
+    public static Properties getOidcProperties() {
+        return OIDC_PROPERTIES;
+    }
+
     /**
      * Returns the list of admin Google IDs configured in build.properties.
      * TODO: refactor all direct accesses to the field to this method call for consistency.
@@ -303,6 +327,10 @@ public final class Config {
 
     public static boolean isUsingFirebase() {
         return "firebase".equalsIgnoreCase(AUTH_TYPE);
+    }
+
+    public static boolean isUsingOidc() {
+        return "oidc".equalsIgnoreCase(AUTH_TYPE);
     }
 
     /**
