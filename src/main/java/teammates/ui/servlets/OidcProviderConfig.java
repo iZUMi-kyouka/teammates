@@ -47,6 +47,18 @@ final class OidcProviderConfig {
         String issuerUrl = props.getProperty(prefix + "issuer.url", "");
         String clientId = props.getProperty(prefix + "client.id", "");
         String clientSecret = props.getProperty(prefix + "client.secret", "");
+        if (issuerUrl.isBlank()) {
+            throw new IllegalArgumentException(
+                    "OIDC provider '" + id + "': app.oidc." + id + ".issuer.url is required but not configured");
+        }
+        if (clientId.isBlank()) {
+            throw new IllegalArgumentException(
+                    "OIDC provider '" + id + "': app.oidc." + id + ".client.id is required but not configured");
+        }
+        if (clientSecret.isBlank()) {
+            throw new IllegalArgumentException(
+                    "OIDC provider '" + id + "': app.oidc." + id + ".client.secret is required but not configured");
+        }
         String emailClaim = props.getProperty(prefix + "email.claim", "email");
         String additionalScopesRaw = props.getProperty(prefix + "additional.scopes", "");
         List<String> additionalScopes = additionalScopesRaw.isEmpty()

@@ -27,6 +27,8 @@ final class OidcProviderRegistry {
 
     private static final Logger log = Logger.getLogger();
 
+    private static OidcProviderRegistry cachedInstance;
+
     private final Map<String, OidcAuthHandler> handlers;
     private final String defaultId;
 
@@ -76,10 +78,10 @@ final class OidcProviderRegistry {
             if (id.isEmpty()) {
                 continue;
             }
-            OidcProviderConfig config = OidcProviderConfig.fromProperties(merged, id);
             try {
+                OidcProviderConfig config = OidcProviderConfig.fromProperties(merged, id);
                 handlers.put(id, new OidcAuthHandler(config));
-            } catch (IOException e) {
+            } catch (IOException | IllegalArgumentException e) {
                 throw new ServletException("Failed to initialise OIDC handler for provider '" + id + "'", e);
             }
         }
@@ -90,6 +92,20 @@ final class OidcProviderRegistry {
 
         String defaultId = handlers.keySet().iterator().next();
         return new OidcProviderRegistry(handlers, defaultId);
+    }
+
+    /**
+     * Returns the shared registry instance, loading it on the first call.
+     * Subsequent calls return the cached instance without repeating network I/O.
+     *
+     * <p>Safe to call without synchronization because servlet {@code init()} is
+     * guaranteed to run in a single thread.
+     */
+    static OidcProviderRegistry getInstance() throws ServletException {
+        if (cachedInstance == null) {
+            cachedInstance = load();
+        }
+        return cachedInstance;
     }
 
     /**
