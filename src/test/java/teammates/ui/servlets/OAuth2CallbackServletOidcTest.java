@@ -102,6 +102,20 @@ public class OAuth2CallbackServletOidcTest extends BaseTestCase {
     }
 
     @Test
+    public void testGetOidcAuthResult_errorParam_doesNotReflectUserInput() throws Exception {
+        OAuth2CallbackServlet servlet = buildServletWithRegistry(mock(OidcProviderRegistry.class));
+        HttpSession session = buildSession(SESSION_ID);
+        String xssPayload = "<script>alert(document.cookie)</script>";
+        MockHttpServletRequest req = buildCallbackRequest(null, null, xssPayload, session);
+        MockHttpServletResponse resp = new MockHttpServletResponse();
+
+        servlet.doGet(req, resp);
+
+        assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, resp.getStatus());
+        assertFalse("Response body must not reflect the raw error parameter", resp.getBody().contains(xssPayload));
+    }
+
+    @Test
     public void testGetOidcAuthResult_missingCode_returns400() throws Exception {
         OAuth2CallbackServlet servlet = buildServletWithRegistry(mock(OidcProviderRegistry.class));
         HttpSession session = buildSession(SESSION_ID);

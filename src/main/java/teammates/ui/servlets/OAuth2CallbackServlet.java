@@ -88,7 +88,8 @@ public class OAuth2CallbackServlet extends AuthServlet {
         AuthorizationCodeResponseUrl responseUrl =
                 new AuthorizationCodeResponseUrl(buf.toString().replaceFirst("^http://", "https://"));
         if (responseUrl.getError() != null) {
-            logAndPrintError(req, resp, HttpStatus.SC_INTERNAL_SERVER_ERROR, responseUrl.getError());
+            log.warning("OAuth2 provider returned error: " + responseUrl.getError());
+            logAndPrintError(req, resp, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Authorization failed");
             return null;
         }
         String code = responseUrl.getCode();
@@ -167,7 +168,8 @@ public class OAuth2CallbackServlet extends AuthServlet {
     private AuthResult getOidcAuthResult(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         String error = req.getParameter("error");
         if (error != null) {
-            logAndPrintError(req, resp, HttpStatus.SC_INTERNAL_SERVER_ERROR, error);
+            log.warning("OIDC provider returned error: " + error);
+            logAndPrintError(req, resp, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Authorization failed");
             return null;
         }
 
@@ -218,6 +220,7 @@ public class OAuth2CallbackServlet extends AuthServlet {
 
     private void logAndPrintError(HttpServletRequest req, HttpServletResponse resp, int status, String message)
             throws IOException {
+        resp.setContentType("text/plain; charset=UTF-8");
         resp.setStatus(status);
         resp.getWriter().print(message);
 
