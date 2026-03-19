@@ -31,7 +31,7 @@ public class LoginServlet extends AuthServlet {
     @Override
     public void init() throws ServletException {
         if (Config.isUsingOidc()) {
-            oidcRegistry = OidcProviderRegistry.load();
+            oidcRegistry = OidcProviderRegistry.getInstance();
         }
     }
 
