@@ -18,15 +18,22 @@ final class OidcProviderConfig {
     final String clientSecret;
     final String emailClaim;
     final List<String> additionalScopes;
+    final String authorizationEndpointOverride; // app.oidc.{id}.override.authorization.endpoint
+    final String tokenEndpointOverride;          // app.oidc.{id}.override.token.endpoint
+    final String jwksEndpointOverride;           // app.oidc.{id}.override.jwks.endpoint
 
     private OidcProviderConfig(String id, String issuerUrl, String clientId, String clientSecret,
-            String emailClaim, List<String> additionalScopes) {
+            String emailClaim, List<String> additionalScopes,
+            String authorizationEndpointOverride, String tokenEndpointOverride, String jwksEndpointOverride) {
         this.id = id;
         this.issuerUrl = issuerUrl;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
         this.emailClaim = emailClaim;
         this.additionalScopes = Collections.unmodifiableList(additionalScopes);
+        this.authorizationEndpointOverride = authorizationEndpointOverride;
+        this.tokenEndpointOverride = tokenEndpointOverride;
+        this.jwksEndpointOverride = jwksEndpointOverride;
     }
 
     /**
@@ -45,7 +52,20 @@ final class OidcProviderConfig {
         List<String> additionalScopes = additionalScopesRaw.isEmpty()
                 ? Collections.emptyList()
                 : Arrays.asList(additionalScopesRaw.split(","));
+        String authOverride = props.getProperty(prefix + "override.authorization.endpoint", null);
+        String tokenOverride = props.getProperty(prefix + "override.token.endpoint", null);
+        String jwksOverride = props.getProperty(prefix + "override.jwks.endpoint", null);
+        // treat empty string as absent
+        if (authOverride != null && authOverride.isEmpty()) {
+            authOverride = null;
+        }
+        if (tokenOverride != null && tokenOverride.isEmpty()) {
+            tokenOverride = null;
+        }
+        if (jwksOverride != null && jwksOverride.isEmpty()) {
+            jwksOverride = null;
+        }
         return new OidcProviderConfig(id, issuerUrl, clientId, clientSecret,
-                emailClaim, additionalScopes);
+                emailClaim, additionalScopes, authOverride, tokenOverride, jwksOverride);
     }
 }
