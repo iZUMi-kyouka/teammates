@@ -29,6 +29,7 @@ import com.nimbusds.oauth2.sdk.id.State;
 import com.nimbusds.openid.connect.sdk.AuthenticationRequest;
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponse;
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponseParser;
+import com.nimbusds.openid.connect.sdk.SubjectType;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 import com.nimbusds.openid.connect.sdk.token.OIDCTokens;
 
@@ -51,11 +52,40 @@ class OidcAuthHandler {
 
     OidcAuthHandler(OidcProviderConfig config) throws IOException {
         this.config = config;
-        try {
-            this.metadata = OIDCProviderMetadata.resolve(new Issuer(config.issuerUrl));
-            this.jwkSource = new RemoteJWKSet<>(metadata.getJWKSetURI().toURL());
-        } catch (Exception e) {
-            throw new IOException("Failed to resolve OIDC provider metadata for issuer: " + config.issuerUrl, e);
+        boolean anyOverride = config.authorizationEndpointOverride != null
+                || config.tokenEndpointOverride != null
+                || config.jwksEndpointOverride != null;
+        if (anyOverride) {
+            // Manual mode: all three overrides must be present
+            if (config.authorizationEndpointOverride == null
+                    || config.tokenEndpointOverride == null
+                    || config.jwksEndpointOverride == null) {
+                throw new IOException("Provider '" + config.id + "': when any endpoint override is set, "
+                        + "all three overrides (authorization, token, jwks) must be set.");
+            }
+            try {
+                URI authUri = new URI(config.authorizationEndpointOverride);
+                URI tokenUri = new URI(config.tokenEndpointOverride);
+                URI jwksUri = new URI(config.jwksEndpointOverride);
+                OIDCProviderMetadata m = new OIDCProviderMetadata(
+                        new Issuer(config.issuerUrl),
+                        List.of(SubjectType.PUBLIC),
+                        jwksUri);
+                m.setAuthorizationEndpointURI(authUri);
+                m.setTokenEndpointURI(tokenUri);
+                this.metadata = m;
+                this.jwkSource = new RemoteJWKSet<>(jwksUri.toURL());
+            } catch (Exception e) {
+                throw new IOException("Provider '" + config.id + "': invalid endpoint override URI", e);
+            }
+        } else {
+            // Automatic mode: resolve from .well-known/openid-configuration
+            try {
+                this.metadata = OIDCProviderMetadata.resolve(new Issuer(config.issuerUrl));
+                this.jwkSource = new RemoteJWKSet<>(metadata.getJWKSetURI().toURL());
+            } catch (Exception e) {
+                throw new IOException("Failed to resolve OIDC provider metadata for issuer: " + config.issuerUrl, e);
+            }
         }
     }
 
