@@ -11,6 +11,7 @@ import teammates.common.util.Const;
 import teammates.ui.output.ActionClasses;
 import teammates.ui.webapi.Action;
 import teammates.ui.webapi.AdminExceptionTestAction;
+import teammates.ui.webapi.ApproveAccountRequestAction;
 import teammates.ui.webapi.BinCourseAction;
 import teammates.ui.webapi.BinFeedbackSessionAction;
 import teammates.ui.webapi.CalculateUsageStatisticsAction;
@@ -40,12 +41,7 @@ import teammates.ui.webapi.FeedbackSessionClosedRemindersAction;
 import teammates.ui.webapi.FeedbackSessionClosingSoonRemindersAction;
 import teammates.ui.webapi.FeedbackSessionOpenedRemindersAction;
 import teammates.ui.webapi.FeedbackSessionOpeningSoonRemindersAction;
-import teammates.ui.webapi.FeedbackSessionPublishedEmailWorkerAction;
 import teammates.ui.webapi.FeedbackSessionPublishedRemindersAction;
-import teammates.ui.webapi.FeedbackSessionRemindEmailWorkerAction;
-import teammates.ui.webapi.FeedbackSessionRemindParticularUsersEmailWorkerAction;
-import teammates.ui.webapi.FeedbackSessionResendPublishedEmailWorkerAction;
-import teammates.ui.webapi.FeedbackSessionUnpublishedEmailWorkerAction;
 import teammates.ui.webapi.GenerateEmailAction;
 import teammates.ui.webapi.GetAccountAction;
 import teammates.ui.webapi.GetAccountRequestAction;
@@ -82,7 +78,6 @@ import teammates.ui.webapi.GetStudentsAction;
 import teammates.ui.webapi.GetTimeZonesAction;
 import teammates.ui.webapi.GetUsageStatisticsAction;
 import teammates.ui.webapi.GetUserCookieAction;
-import teammates.ui.webapi.InstructorCourseJoinEmailWorkerAction;
 import teammates.ui.webapi.JoinCourseAction;
 import teammates.ui.webapi.JsonResult;
 import teammates.ui.webapi.MarkNotificationAsReadAction;
@@ -106,7 +101,6 @@ import teammates.ui.webapi.SendErrorReportAction;
 import teammates.ui.webapi.SendJoinReminderEmailAction;
 import teammates.ui.webapi.SendLoginEmailAction;
 import teammates.ui.webapi.SessionLinksRecoveryAction;
-import teammates.ui.webapi.StudentCourseJoinEmailWorkerAction;
 import teammates.ui.webapi.SubmitFeedbackResponsesAction;
 import teammates.ui.webapi.UnpublishFeedbackSessionAction;
 import teammates.ui.webapi.UpdateAccountRequestAction;
@@ -114,6 +108,7 @@ import teammates.ui.webapi.UpdateCourseAction;
 import teammates.ui.webapi.UpdateFeedbackQuestionAction;
 import teammates.ui.webapi.UpdateFeedbackResponseCommentAction;
 import teammates.ui.webapi.UpdateFeedbackSessionAction;
+import teammates.ui.webapi.UpdateFeedbackSessionDeadlineExtensionsAction;
 import teammates.ui.webapi.UpdateFeedbackSessionLogsAction;
 import teammates.ui.webapi.UpdateInstructorAction;
 import teammates.ui.webapi.UpdateInstructorPrivilegeAction;
@@ -161,22 +156,19 @@ public class GetActionClassesActionTest extends BaseActionTest<GetActionClassesA
                 CreateInstructorAction.class,
                 GetInstructorAction.class,
                 UpdateInstructorAction.class,
-                InstructorCourseJoinEmailWorkerAction.class,
                 DeleteStudentAction.class,
                 GetStudentAction.class,
                 UpdateStudentAction.class,
                 SearchStudentsAction.class,
-                FeedbackSessionRemindEmailWorkerAction.class,
                 DeleteFeedbackSessionAction.class,
                 CreateFeedbackSessionAction.class,
                 GetFeedbackSessionAction.class,
                 UpdateFeedbackSessionAction.class,
+                UpdateFeedbackSessionDeadlineExtensionsAction.class,
                 FeedbackSessionClosingSoonRemindersAction.class,
                 GetTimeZonesAction.class,
-                FeedbackSessionRemindParticularUsersEmailWorkerAction.class,
                 GetFeedbackResponsesAction.class,
                 SubmitFeedbackResponsesAction.class,
-                FeedbackSessionPublishedEmailWorkerAction.class,
                 FeedbackSessionClosedRemindersAction.class,
                 SendErrorReportAction.class,
                 GetActionClassesAction.class,
@@ -193,6 +185,7 @@ public class GetActionClassesActionTest extends BaseActionTest<GetActionClassesA
                 DeleteAccountRequestAction.class,
                 GetAccountRequestsAction.class,
                 UpdateAccountRequestAction.class,
+                ApproveAccountRequestAction.class,
                 RejectAccountRequestAction.class,
                 GetAccountAction.class,
                 GetAccountsAction.class,
@@ -214,11 +207,8 @@ public class GetActionClassesActionTest extends BaseActionTest<GetActionClassesA
                 UpdateCourseAction.class,
                 GetFeedbackQuestionRecipientsAction.class,
                 RemindFeedbackSessionSubmissionAction.class,
-                FeedbackSessionUnpublishedEmailWorkerAction.class,
                 SendEmailWorkerAction.class,
                 GetInstructorsAction.class,
-                FeedbackSessionResendPublishedEmailWorkerAction.class,
-                StudentCourseJoinEmailWorkerAction.class,
                 SearchInstructorsAction.class,
                 GetCourseSectionNamesAction.class,
                 ResetAccountAction.class,
