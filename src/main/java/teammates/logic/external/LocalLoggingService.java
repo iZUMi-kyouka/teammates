@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.math3.random.RandomDataGenerator;
 
@@ -221,9 +222,14 @@ public class LocalLoggingService implements LogService {
     @Override
     public List<FeedbackSessionLogEntry> getOrderedFeedbackSessionLogs(String courseId, String email,
             long startTime, long endTime, String fsName) {
-        return FEEDBACK_SESSION_LOG_ENTRIES
-                .getOrDefault(courseId, new ArrayList<>())
-                .stream()
+        Stream<FeedbackSessionLogEntry> feedbackSessionLogEntries;
+        if (courseId == null) {
+            feedbackSessionLogEntries = FEEDBACK_SESSION_LOG_ENTRIES.values().stream().flatMap(Collection::stream);
+        } else {
+            feedbackSessionLogEntries = FEEDBACK_SESSION_LOG_ENTRIES.getOrDefault(courseId, new ArrayList<>()).stream();
+        }
+
+        return feedbackSessionLogEntries
                 .filter(log -> email == null || log.getStudentEmail().equals(email))
                 .filter(log -> fsName == null || log.getFeedbackSessionName().equals(fsName))
                 .filter(log -> log.getTimestamp() >= startTime)

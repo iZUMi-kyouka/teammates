@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import teammates.common.datatransfer.FeedbackSessionLogEntry;
 import teammates.common.datatransfer.logs.FeedbackSessionLogType;
+import teammates.common.util.Config;
 import teammates.common.util.Const;
 import teammates.common.util.TimeHelper;
 import teammates.storage.sqlentity.FeedbackSession;
@@ -29,7 +30,9 @@ public class UpdateFeedbackSessionLogsAction extends AdminOnlyAction {
     public JsonResult execute() {
         List<FeedbackSessionLog> filteredLogs = new ArrayList<>();
 
-        Instant endTime = TimeHelper.getInstantNearestQuarterHourBefore(Instant.now());
+        Instant endTime = Config.IS_DEV_SERVER
+                ? Instant.now()
+                : TimeHelper.getInstantNearestQuarterHourBefore(Instant.now());
         Instant startTime = endTime.minus(COLLECTION_TIME_PERIOD, ChronoUnit.MINUTES);
 
         List<FeedbackSessionLogEntry> logEntries = logsProcessor.getOrderedFeedbackSessionLogs(null, null,
@@ -42,6 +45,10 @@ public class UpdateFeedbackSessionLogsAction extends AdminOnlyAction {
             UUID fbSessionId = logEntry.getFeedbackSessionId();
             String type = logEntry.getFeedbackSessionLogType();
             Long timestamp = logEntry.getTimestamp();
+
+            if (studentId == null || fbSessionId == null) {
+                continue;
+            }
 
             lastSavedTimestamps.computeIfAbsent(studentId, k -> new HashMap<>());
             lastSavedTimestamps.get(studentId).computeIfAbsent(courseId, k -> new HashMap<>());

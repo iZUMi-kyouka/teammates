@@ -11,3 +11,9 @@ services:
       POSTGRES_USER: teammates
       POSTGRES_PASSWORD: teammates
       POSTGRES_DB: teammates
+  cron:
+    container_name: teammates-cron-1
+    build:
+      context: cron-dev
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
